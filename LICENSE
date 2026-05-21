@@ -1,0 +1,18 @@
+descriptor_tpu_soc repository notice
+
+Copyright (c) 2026 ChentcLiberty
+All rights reserved unless a file or subtree states otherwise.
+
+This repository is a curated publication snapshot of an active hardware/software
+workspace. Except for third-party components that keep their own original
+license terms, the materials in this repository are provided for reading,
+review, research, evaluation, and internal reference.
+
+No additional patent license, trademark license, or commercial redistribution
+right is granted by default.
+
+If you want to reuse substantial portions of this repository outside evaluation
+or research contexts, contact the repository owner for permission.
+
+Third-party code kept under `third_party/` or under files with their own notice
+remains governed by the corresponding upstream license and attribution terms.

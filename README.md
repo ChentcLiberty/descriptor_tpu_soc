@@ -123,6 +123,15 @@ This public package intentionally excludes:
 
 The goal is to keep the repository source-oriented and readable.
 
+## Public repo docs
+
+- `QUICKSTART.md`
+  Fast entry for the current `NET_ID=3` mainline and verification flow.
+- `RELEASE_NOTES_v0.1.0.md`
+  First public snapshot notes for the `NET_ID=3` delivery state.
+- `THIRD_PARTY_NOTICES.md`
+  Third-party attribution notes for retained external code.
+
 ## Suggested reading order
 
 1. `01_soc_mainline/docs/stage2_net3_cnn_frontend_status_20260518.md`
