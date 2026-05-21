@@ -23,6 +23,7 @@ results.xml
 command.log
 simv
 simv_*
+*.o
 
 # python/cache
 __pycache__/
@@ -35,3 +36,4 @@ __pycache__/
 
 # misc
 .DS_Store
+Debug/
