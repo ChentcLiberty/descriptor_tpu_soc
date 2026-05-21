@@ -1,0 +1,274 @@
+{
+  "layers": [
+    {
+      "batchnorm_folded": "perceptron_subnet.layers.1",
+      "chunks": [
+        {
+          "array": "g_tpu_param_mlp_key_l0",
+          "clipped_values": 0,
+          "output_word_start": 0,
+          "output_words": 16,
+          "param_words": 48
+        }
+      ],
+      "input_dim": 2,
+      "input_words": 1,
+      "linear": "perceptron_subnet.layers.0",
+      "name": "mlp_key_l0",
+      "output_dim": 32,
+      "output_words": 16
+    },
+    {
+      "batchnorm_folded": "perceptron_subnet.layers.5",
+      "chunks": [
+        {
+          "array": "g_tpu_param_mlp_key_l1",
+          "clipped_values": 0,
+          "output_word_start": 0,
+          "output_words": 32,
+          "param_words": 1056
+        }
+      ],
+      "input_dim": 32,
+      "input_words": 16,
+      "linear": "perceptron_subnet.layers.4",
+      "name": "mlp_key_l1",
+      "output_dim": 64,
+      "output_words": 32
+    },
+    {
+      "batchnorm_folded": "perceptron_subnet.layers.9",
+      "chunks": [
+        {
+          "array": "g_tpu_param_mlp_key_l2",
+          "clipped_values": 0,
+          "output_word_start": 0,
+          "output_words": 64,
+          "param_words": 4160
+        }
+      ],
+      "input_dim": 64,
+      "input_words": 32,
+      "linear": "perceptron_subnet.layers.8",
+      "name": "mlp_key_l2",
+      "output_dim": 128,
+      "output_words": 64
+    },
+    {
+      "batchnorm_folded": "perceptron_subnet.layers.13",
+      "chunks": [
+        {
+          "array": "g_tpu_param_mlp_key_l3",
+          "clipped_values": 0,
+          "output_word_start": 0,
+          "output_words": 32,
+          "param_words": 4128
+        }
+      ],
+      "input_dim": 128,
+      "input_words": 64,
+      "linear": "perceptron_subnet.layers.12",
+      "name": "mlp_key_l3",
+      "output_dim": 64,
+      "output_words": 32
+    },
+    {
+      "batchnorm_folded": "perceptron_subnet.layers.17",
+      "chunks": [
+        {
+          "array": "g_tpu_param_mlp_key_l4",
+          "clipped_values": 0,
+          "output_word_start": 0,
+          "output_words": 16,
+          "param_words": 1040
+        }
+      ],
+      "input_dim": 64,
+      "input_words": 32,
+      "linear": "perceptron_subnet.layers.16",
+      "name": "mlp_key_l4",
+      "output_dim": 32,
+      "output_words": 16
+    },
+    {
+      "batchnorm_folded": "other_encoder.encoder.1",
+      "chunks": [
+        {
+          "array": "g_tpu_param_mlp_other_l0",
+          "clipped_values": 0,
+          "output_word_start": 0,
+          "output_words": 16,
+          "param_words": 112
+        }
+      ],
+      "input_dim": 6,
+      "input_words": 3,
+      "linear": "other_encoder.encoder.0",
+      "name": "mlp_other_l0",
+      "output_dim": 32,
+      "output_words": 16
+    },
+    {
+      "batchnorm_folded": "other_encoder.encoder.5",
+      "chunks": [
+        {
+          "array": "g_tpu_param_mlp_other_l1",
+          "clipped_values": 0,
+          "output_word_start": 0,
+          "output_words": 16,
+          "param_words": 528
+        }
+      ],
+      "input_dim": 32,
+      "input_words": 16,
+      "linear": "other_encoder.encoder.4",
+      "name": "mlp_other_l1",
+      "output_dim": 32,
+      "output_words": 16
+    },
+    {
+      "batchnorm_folded": "classifier.1",
+      "chunks": [
+        {
+          "array": "g_tpu_param_classifier_l0_chunk0",
+          "clipped_values": 0,
+          "output_word_start": 0,
+          "output_words": 16,
+          "param_words": 5168
+        },
+        {
+          "array": "g_tpu_param_classifier_l0_chunk1",
+          "clipped_values": 0,
+          "output_word_start": 16,
+          "output_words": 16,
+          "param_words": 5168
+        },
+        {
+          "array": "g_tpu_param_classifier_l0_chunk2",
+          "clipped_values": 0,
+          "output_word_start": 32,
+          "output_words": 16,
+          "param_words": 5168
+        },
+        {
+          "array": "g_tpu_param_classifier_l0_chunk3",
+          "clipped_values": 0,
+          "output_word_start": 48,
+          "output_words": 16,
+          "param_words": 5168
+        },
+        {
+          "array": "g_tpu_param_classifier_l0_chunk4",
+          "clipped_values": 0,
+          "output_word_start": 64,
+          "output_words": 16,
+          "param_words": 5168
+        },
+        {
+          "array": "g_tpu_param_classifier_l0_chunk5",
+          "clipped_values": 0,
+          "output_word_start": 80,
+          "output_words": 16,
+          "param_words": 5168
+        },
+        {
+          "array": "g_tpu_param_classifier_l0_chunk6",
+          "clipped_values": 0,
+          "output_word_start": 96,
+          "output_words": 16,
+          "param_words": 5168
+        },
+        {
+          "array": "g_tpu_param_classifier_l0_chunk7",
+          "clipped_values": 0,
+          "output_word_start": 112,
+          "output_words": 16,
+          "param_words": 5168
+        }
+      ],
+      "input_dim": 322,
+      "input_words": 161,
+      "linear": "classifier.0",
+      "name": "classifier_l0",
+      "output_dim": 256,
+      "output_words": 128
+    },
+    {
+      "batchnorm_folded": "classifier.5",
+      "chunks": [
+        {
+          "array": "g_tpu_param_classifier_l1_chunk0",
+          "clipped_values": 0,
+          "output_word_start": 0,
+          "output_words": 16,
+          "param_words": 4112
+        },
+        {
+          "array": "g_tpu_param_classifier_l1_chunk1",
+          "clipped_values": 0,
+          "output_word_start": 16,
+          "output_words": 16,
+          "param_words": 4112
+        },
+        {
+          "array": "g_tpu_param_classifier_l1_chunk2",
+          "clipped_values": 0,
+          "output_word_start": 32,
+          "output_words": 16,
+          "param_words": 4112
+        },
+        {
+          "array": "g_tpu_param_classifier_l1_chunk3",
+          "clipped_values": 0,
+          "output_word_start": 48,
+          "output_words": 16,
+          "param_words": 4112
+        }
+      ],
+      "input_dim": 256,
+      "input_words": 128,
+      "linear": "classifier.4",
+      "name": "classifier_l1",
+      "output_dim": 128,
+      "output_words": 64
+    },
+    {
+      "batchnorm_folded": "classifier.9",
+      "chunks": [
+        {
+          "array": "g_tpu_param_classifier_l2",
+          "clipped_values": 0,
+          "output_word_start": 0,
+          "output_words": 32,
+          "param_words": 4128
+        }
+      ],
+      "input_dim": 128,
+      "input_words": 64,
+      "linear": "classifier.8",
+      "name": "classifier_l2",
+      "output_dim": 64,
+      "output_words": 32
+    },
+    {
+      "batchnorm_folded": null,
+      "chunks": [
+        {
+          "array": "g_tpu_param_classifier_l3",
+          "clipped_values": 0,
+          "output_word_start": 0,
+          "output_words": 2,
+          "param_words": 130
+        }
+      ],
+      "input_dim": 64,
+      "input_words": 32,
+      "linear": "classifier.12",
+      "name": "classifier_l3",
+      "output_dim": 4,
+      "output_words": 2
+    }
+  ],
+  "q_format": "Q8.8 packed two int16 lanes per uint32 word",
+  "scale": 256.0
+}

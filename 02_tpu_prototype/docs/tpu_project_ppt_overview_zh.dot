@@ -1,0 +1,136 @@
+digraph TinyTPUProjectPPT_ZH {
+    graph [
+        rankdir=TB,
+        splines=ortho,
+        newrank=true,
+        compound=true,
+        pad=0.24,
+        nodesep=0.42,
+        ranksep=0.72,
+        bgcolor="#f8f6f1",
+        fontname="WenQuanYi Zen Hei",
+        labelloc=t,
+        labeljust=l,
+        outputorder=nodesfirst
+    ];
+
+    node [
+        shape=box,
+        style="rounded,filled",
+        color="#334155",
+        penwidth=1.2,
+        fontname="WenQuanYi Zen Hei",
+        fontsize=13,
+        margin="0.20,0.12",
+        fillcolor="#fffdfa"
+    ];
+
+    edge [
+        color="#64748b",
+        penwidth=1.45,
+        arrowsize=0.75,
+        fontname="WenQuanYi Zen Hei",
+        fontsize=10
+    ];
+
+    title [label="TinyTPU AXI-Lite SoC 项目总览", fillcolor="#efe4cf", color="#8b6b3f", penwidth=1.4, fontsize=22, width=6.2, height=0.78];
+    sub1 [label="系统集成", fillcolor="#f7efe3", color="#b38c54", width=1.45, height=0.52, fontsize=11];
+    sub2 [label="指令化执行", fillcolor="#f7efe3", color="#b38c54", width=1.45, height=0.52, fontsize=11];
+    sub3 [label="cocotb 闭环验证", fillcolor="#f7efe3", color="#b38c54", width=1.60, height=0.52, fontsize=11];
+    sub4 [label="2x2 / Q8.8 / XOR", fillcolor="#f7efe3", color="#b38c54", width=1.65, height=0.52, fontsize=11];
+
+    { rank=same; sub1 sub2 sub3 sub4 }
+    sub1 -> sub2 [style=invis, weight=100];
+    sub2 -> sub3 [style=invis, weight=100];
+    sub3 -> sub4 [style=invis, weight=100];
+    title -> sub2 [style=invis, weight=100];
+
+    subgraph cluster_goal {
+        label="1. 项目起点";
+        color="#d08a1c";
+        penwidth=1.3;
+        style="rounded,filled";
+        fillcolor="#fff4df";
+
+        baseline [label="原始 tiny-tpu\n主要靠 testbench 直驱 RTL\n能做模块验证 但不够 SoC 化", width=2.20, height=1.05];
+        gap [label="我补的缺口\nAXI-Lite 接口\nIMEM / sequencer\n系统级训练闭环", width=2.00, height=1.00];
+    }
+
+    subgraph cluster_solution {
+        label="2. 系统补齐";
+        color="#2b6cb0";
+        penwidth=1.3;
+        style="rounded,filled";
+        fillcolor="#eaf2fd";
+
+        host [label="Host / PS\nAXI-Lite MMIO", fillcolor="#f7e7d0", width=1.60, height=0.72];
+        axil [label="AXI-Lite 前端\n寄存器堆 / CSR\nstart / status / IMEM", width=1.95, height=0.95];
+        seq [label="Sequencer\nDISPATCH / WAIT\nADVANCE", width=1.55, height=0.85];
+        imem [label="IMEM\n59 条指令", width=1.35, height=0.80];
+        compiler [label="Python 调度器\nscheduler.py\nencode_instrs.py", fillcolor="#f3efe4", width=1.70, height=0.92];
+        soc [label="tpu_soc\nfrontend + TPU 核", width=1.70, height=0.82];
+        ub [label="Unified Buffer\nhost write / update", width=1.75, height=0.82];
+        sys [label="Systolic Array\n2x2 Weight Stationary", width=1.75, height=0.82];
+        vpu [label="VPU\nbias / act / loss / grad", width=1.75, height=0.82];
+
+        { rank=same; host axil seq soc ub sys vpu }
+        { rank=same; compiler imem }
+    }
+
+    subgraph cluster_verify {
+        label="3. 验证闭环与 Debug";
+        color="#0f766e";
+        penwidth=1.3;
+        style="rounded,filled";
+        fillcolor="#e7f6f1";
+
+        e2e [label="cocotb e2e\nAXI 写入 UB / IMEM\n检查 H1 + dZ2 + dZ1 + UB update", width=2.10, height=1.05];
+        conv [label="多 epoch 收敛\n连续触发训练\n看 loss 趋势与 XOR 分类", width=2.05, height=1.00];
+        refm [label="NumPy / Q8.8 参考模型\nscoreboard + 趋势对齐", width=1.95, height=0.90];
+        bugs [label="关键 bug 收敛\nhost write 无效\npathway 不保持\nwait 逻辑卡死", width=1.95, height=1.02];
+    }
+
+    subgraph cluster_result {
+        label="4. 可对外表述结果";
+        color="#7c3aed";
+        penwidth=1.3;
+        style="rounded,filled";
+        fillcolor="#f2ebff";
+
+        pass [label="单次 e2e\n41 / 41 PASS", width=1.45, height=0.85];
+        train [label="训练收敛\n12 epoch\n0.2529 -> 0.1777", width=1.65, height=0.90];
+        xor [label="任务结果\nXOR 预测\n(0, 1, 1, 0)", width=1.60, height=0.90];
+        fmax [label="综合亮点\npipeline 变体\n164.10 -> 183.91 MHz", width=1.85, height=0.92];
+        scope [label="边界说明\n当前 tiny-tpu 原型\n不是通用编译器 / 完整 SoC", width=2.10, height=0.95];
+    }
+
+    { rank=same; baseline host e2e pass }
+    baseline -> host [style=invis, weight=100];
+    host -> e2e [style=invis, weight=100];
+    e2e -> pass [style=invis, weight=100];
+
+    baseline -> gap [xlabel="从裸 RTL 到 SoC 原型", color="#d08a1c", fontcolor="#d08a1c", penwidth=1.7];
+
+    host -> axil [xlabel="MMIO 控制", color="#8b5e1a", fontcolor="#8b5e1a", penwidth=1.75];
+    compiler -> imem [xlabel="生成指令", color="#8b5e1a", fontcolor="#8b5e1a", penwidth=1.65];
+    axil -> seq [xlabel="start / status", color="#2563eb", fontcolor="#2563eb"];
+    axil -> imem [xlabel="装载 IMEM", color="#2563eb", fontcolor="#2563eb"];
+    imem -> seq [xlabel="wait_after", color="#2563eb", fontcolor="#2563eb"];
+    seq -> soc [xlabel="seq_instr_pulse", color="#2563eb", fontcolor="#2563eb"];
+    axil -> soc [xlabel="UB_DATA / 参数", color="#c2410c", fontcolor="#c2410c", penwidth=1.7];
+    soc -> ub [xlabel="数据搬运", color="#0f766e", fontcolor="#0f766e"];
+    ub -> sys [xlabel="矩阵块", color="#0f766e", fontcolor="#0f766e"];
+    ub -> vpu [xlabel="训练数据", color="#0f766e", fontcolor="#0f766e"];
+    sys -> vpu [xlabel="中间结果", color="#0f766e", fontcolor="#0f766e", constraint=false];
+
+    soc -> e2e [xlabel="AXI e2e", color="#0f766e", fontcolor="#0f766e", penwidth=1.7];
+    soc -> conv [xlabel="多 epoch", color="#0f766e", fontcolor="#0f766e", penwidth=1.7];
+    refm -> e2e [color="#0f766e"];
+    bugs -> conv [style=dashed, color="#0f766e"];
+
+    e2e -> pass [color="#7c3aed", penwidth=1.7];
+    conv -> train [color="#7c3aed", penwidth=1.7];
+    train -> xor [color="#7c3aed", penwidth=1.6];
+    sys -> fmax [style=dashed, color="#7c3aed", penwidth=1.5, constraint=false];
+    bugs -> scope [style=dashed, color="#7c3aed", penwidth=1.5];
+}

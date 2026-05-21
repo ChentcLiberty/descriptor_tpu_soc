@@ -1,0 +1,122 @@
+digraph TinyTPUSoC {
+    graph [
+        rankdir=LR,
+        splines=ortho,
+        newrank=true,
+        compound=true,
+        pad=0.26,
+        nodesep=0.58,
+        ranksep=1.02,
+        bgcolor="#fbfaf6",
+        fontname="DejaVu Sans",
+        labelloc=t,
+        labeljust=l,
+        outputorder=nodesfirst
+    ];
+
+    node [
+        shape=box,
+        style="rounded,filled",
+        color="#2e3a46",
+        penwidth=1.2,
+        fontname="DejaVu Sans",
+        fontsize=13,
+        margin="0.20,0.12",
+        fillcolor="#fffdfa",
+        width=2.00,
+        height=0.78
+    ];
+
+    edge [
+        color="#4a5568",
+        penwidth=1.5,
+        arrowsize=0.72,
+        fontname="DejaVu Sans",
+        fontsize=8.5
+    ];
+
+    host [label="Host / PS\nAXI-Lite", fillcolor="#f7e7d0", group="ext"];
+    compiler [label="Compiler\nschedule / imem", fillcolor="#f3efe4", group="ext"];
+    note [label="Prototype Boundary\nNo IRQ / DMA", style="rounded,dashed,filled", color="#7b8794", penwidth=1.1, fillcolor="#f1f5f9", group="ext"];
+
+    sys_obs [label="Sys Outputs\nsys_data / valid", fillcolor="#e8f3eb", group="out"];
+    vpu_obs [label="VPU Outputs\nvpu_data / valid", fillcolor="#e8f3eb", group="out"];
+
+    { rank=same; host compiler note }
+    host -> compiler [style=invis, weight=100, minlen=1];
+    compiler -> note [style=invis, weight=100, minlen=1];
+
+    subgraph cluster_soc {
+        label="tpu_soc Top";
+        color="#1f2937";
+        penwidth=1.5;
+        style="rounded,filled";
+        fillcolor="#f6f1e8";
+        fontname="DejaVu Sans Bold";
+        fontsize=16;
+
+        subgraph cluster_frontend {
+            label="tpu_frontend_axil";
+            color="#b7791f";
+            penwidth=1.3;
+            style="rounded,filled";
+            fillcolor="#fff6de";
+
+            axil [label="AXI-Lite / CSR\ncontrol status\nUB / IMEM / params", fillcolor="#fffdf7", width=2.35, height=0.98, group="f1"];
+            params [label="Params\nleak inv lr\npathway", fillcolor="#fffdf7", width=1.60, group="f2"];
+            seq [label="Sequencer\nstart step\nbusy run", fillcolor="#fffdf7", width=1.60, group="f2"];
+            imem [label="Instr Mem\n64 x 32", fillcolor="#fffdf7", width=1.55, group="f2"];
+            cu [label="Decode\nswitch ub_rd\nub_wr_host", fillcolor="#fffdf7", width=1.70, group="f3"];
+
+            { rank=same; axil }
+            { rank=same; params seq imem }
+            { rank=same; cu }
+            params -> seq [style=invis, weight=100, minlen=1];
+            seq -> imem [style=invis, weight=100, minlen=1];
+        }
+
+        subgraph cluster_core {
+            label="tpu Core";
+            color="#2c5282";
+            penwidth=1.3;
+            style="rounded,filled";
+            fillcolor="#eaf1fb";
+
+            ctrl [label="Core Ctrl\nswitch ub_ptr\nparams", fillcolor="#fbfdff", width=1.75, group="c1"];
+            ub [label="Unified Buffer\nhost load / data", fillcolor="#fbfdff", width=1.85, group="c1"];
+            sys [label="Systolic\nmatmul", fillcolor="#fbfdff", width=1.55, group="c2"];
+            vpu [label="VPU Train\nact loss grad\nparam update", fillcolor="#fbfdff", width=1.90, group="c2"];
+
+            { rank=same; ctrl ub }
+            { rank=same; sys vpu }
+            ctrl -> ub [style=invis, weight=100, minlen=1];
+            sys -> vpu [style=invis, weight=100, minlen=1];
+        }
+    }
+
+    { rank=same; sys_obs vpu_obs }
+    sys_obs -> vpu_obs [style=invis, weight=100, minlen=1];
+
+    host:e -> axil:w [xlabel="MMIO", color="#7b4f1d", fontcolor="#7b4f1d", penwidth=1.8];
+    compiler:e -> imem:w [xlabel="instr", color="#7b4f1d", fontcolor="#7b4f1d", penwidth=1.7];
+
+    axil:e -> params:w [color="#2563eb"];
+    axil:e -> seq:w [xlabel="CTRL", color="#2563eb", fontcolor="#2563eb"];
+    axil:s -> imem:w [color="#2563eb"];
+    axil:e -> ub:w [xlabel="host load", color="#c2410c", fontcolor="#c2410c", penwidth=1.8];
+
+    imem:n -> seq:s [color="#2563eb"];
+    seq:e -> cu:w [color="#2563eb"];
+    cu:e -> ctrl:w [xlabel="control", color="#2563eb", fontcolor="#2563eb"];
+    params:e -> ctrl:nw [color="#2563eb"];
+
+    ctrl:e -> ub:w [color="#0f766e"];
+    ub:e -> sys:w [xlabel="tiles", color="#0f766e", fontcolor="#0f766e"];
+    ub:e -> vpu:w [xlabel="train data", color="#0f766e", fontcolor="#0f766e"];
+    sys:s -> vpu:n [color="#0f766e", constraint=false];
+    vpu:w -> ub:s [color="#c2410c", constraint=false];
+    vpu:w -> seq:n [xlabel="done", color="#15803d", fontcolor="#15803d", style=dashed, constraint=false];
+
+    sys:e -> sys_obs:w [color="#15803d", penwidth=1.7];
+    vpu:e -> vpu_obs:w [color="#15803d", penwidth=1.7];
+}

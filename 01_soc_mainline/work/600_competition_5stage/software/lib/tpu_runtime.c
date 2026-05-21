@@ -1,0 +1,418 @@
+/************************************************************************************************************************
+TPU runtime 骨架(主源文件)
+@brief  CPU 侧 TPU runtime 的最小软件骨架
+@date   2026/04/17
+************************************************************************************************************************/
+
+#include "../include/tpu_runtime.h"
+#include "../include/utils.h"
+
+#ifndef TPU_RUNTIME_USE_MMIO
+#define TPU_RUNTIME_USE_MMIO 0
+#endif
+
+#ifndef TPU_RUNTIME_USE_EXPORTED_PARAMS_Q8_8
+#define TPU_RUNTIME_USE_EXPORTED_PARAMS_Q8_8 0
+#endif
+
+#ifndef TPU_RUNTIME_PARAM_POOL_PRELOADED
+#define TPU_RUNTIME_PARAM_POOL_PRELOADED 0
+#endif
+
+#if TPU_RUNTIME_USE_EXPORTED_PARAMS_Q8_8 && !TPU_RUNTIME_PARAM_POOL_PRELOADED
+#include "../generated/breath_tpu_params_q8_8.h"
+#endif
+
+TPURuntime g_tpu_runtime;
+
+static const TPUNetMeta g_tpu_net_meta[] = {
+    {NET_ID_MLP_KEY,        TPU_FAMILY_MLP,   0u,   1u,   16u, TPU_PARAM_POOL_MLP_KEY_WORDS,    1u},
+    {NET_ID_MLP_OTHER,      TPU_FAMILY_MLP,   1u,   3u,   16u, TPU_PARAM_POOL_MLP_OTHER_WORDS,  1u},
+    {NET_ID_CLASSIFIER,     TPU_FAMILY_HEAD,  2u, 161u,    2u, TPU_PARAM_POOL_CLASSIFIER_WORDS, 1u},
+    {NET_ID_CNN1D_RESERVED, TPU_FAMILY_CNN1D, 3u, TPU_CNN1D_SIGNAL_WORDS, TPU_CNN1D_OUT_WORDS, TPU_PARAM_POOL_CNN1D_RSVD_WORDS, 1u}
+};
+
+#if !TPU_RUNTIME_USE_EXPORTED_PARAMS_Q8_8
+static const uint32_t g_param_blob_mlp_key[TPU_PARAM_POOL_MLP_KEY_WORDS] = {
+    0x00000100u, 0x01000000u, 0x00000000u, 0x00000200u, 0x02000000u, 0x00000000u,
+    0x00000300u, 0x03000000u, 0x00000000u, 0x00000400u, 0x04000000u, 0x00000000u,
+    0x00000500u, 0x05000000u, 0x00000000u, 0x00000600u, 0x06000000u, 0x00000000u,
+    0x00000700u, 0x07000000u, 0x00000000u, 0x00000800u, 0x08000000u, 0x00000000u,
+    0x00000900u, 0x09000000u, 0x00000000u, 0x00000A00u, 0x0A000000u, 0x00000000u,
+    0x00000B00u, 0x0B000000u, 0x00000000u, 0x00000C00u, 0x0C000000u, 0x00000000u,
+    0x00000D00u, 0x0D000000u, 0x00000000u, 0x00000E00u, 0x0E000000u, 0x00000000u,
+    0x00000F00u, 0x0F000000u, 0x00000000u, 0x00001000u, 0x10000000u, 0x00000000u
+};
+#endif
+
+static volatile uint32_t g_shared_mem_evict_sink;
+static uint32_t g_shared_mem_evict_epoch;
+
+#define TPU_SHARED_SYNC_SETTLE_LOOPS 2048u
+
+static inline void cpu_mem_fence(void){
+    __asm__ __volatile__("fence rw, rw" ::: "memory");
+}
+
+static volatile uint32_t* tpu_reg_ptr(TPURuntime* runtime, uint32_t reg_ofs){
+    return (volatile uint32_t*)(uintptr_t)(runtime->regs_baseaddr + reg_ofs);
+}
+
+static volatile uint32_t* shared_word_ptr(uint32_t addr){
+    return (volatile uint32_t*)(uintptr_t)addr;
+}
+
+static void tpu_reg_write(TPURuntime* runtime, uint32_t reg_ofs, uint32_t value){
+    *tpu_reg_ptr(runtime, reg_ofs) = value;
+}
+
+static uint32_t tpu_reg_read(TPURuntime* runtime, uint32_t reg_ofs){
+    return *tpu_reg_ptr(runtime, reg_ofs);
+}
+
+static void shared_mem_write_words(uint32_t dst_addr, const uint32_t* src_words, uint32_t word_count){
+    for(uint32_t i = 0u;i < word_count;i++){
+        shared_word_ptr(dst_addr)[i] = src_words[i];
+    }
+}
+
+static void shared_mem_fill_ramp(uint32_t dst_addr, uint32_t word_count, uint32_t seed){
+    for(uint32_t i = 0u;i < word_count;i++){
+        shared_word_ptr(dst_addr)[i] = seed + i;
+    }
+}
+
+static void shared_mem_zero_words(uint32_t dst_addr, uint32_t word_count){
+    for(uint32_t i = 0u;i < word_count;i++){
+        shared_word_ptr(dst_addr)[i] = 0u;
+    }
+}
+
+static void shared_mem_cache_evict_all(void){
+    uint32_t evict_base = (g_shared_mem_evict_epoch & 0x1u) ? TPU_CACHE_EVICT_REGION1_BASE:TPU_CACHE_EVICT_REGION0_BASE;
+
+    for(uint32_t set_idx = 0u;set_idx < TPU_DCACHE_SET_COUNT;set_idx++){
+        uint32_t line_ofs = set_idx * TPU_DCACHE_LINE_BYTES;
+
+        for(uint32_t tag_idx = 0u;tag_idx < TPU_DCACHE_EVICT_TAGS;tag_idx++){
+            uint32_t evict_addr = evict_base + (tag_idx * TPU_DCACHE_SET_STRIDE) + line_ofs;
+            g_shared_mem_evict_sink ^= *shared_word_ptr(evict_addr);
+        }
+    }
+
+    g_shared_mem_evict_epoch ^= 0x1u;
+}
+
+static void shared_mem_sync_settle(void){
+    for(volatile uint32_t i = 0u;i < TPU_SHARED_SYNC_SETTLE_LOOPS;i++){
+        __asm__ __volatile__("nop");
+    }
+}
+
+static void shared_mem_sync_for_device(void){
+    cpu_mem_fence();
+    shared_mem_cache_evict_all();
+    cpu_mem_fence();
+    shared_mem_sync_settle();
+}
+
+static void shared_mem_sync_for_cpu(void){
+    cpu_mem_fence();
+    shared_mem_cache_evict_all();
+    cpu_mem_fence();
+    shared_mem_sync_settle();
+}
+
+static uint32_t tpu_param_pool_base(uint32_t net_id){
+    switch(net_id){
+        case NET_ID_MLP_KEY:
+            return TPU_PARAM_POOL_MLP_KEY_BASE;
+        case NET_ID_MLP_OTHER:
+            return TPU_PARAM_POOL_MLP_OTHER_BASE;
+        case NET_ID_CLASSIFIER:
+            return TPU_PARAM_POOL_CLASSIFIER_BASE;
+        default:
+            return TPU_PARAM_POOL_CNN1D_RSVD_BASE;
+    }
+}
+
+static void tpu_runtime_refresh_active_layout(TPURuntime* runtime){
+    TPUBufferLayout layout = tpu_get_buffer_layout(runtime->active_buf_id);
+    runtime->active_desc_addr = layout.desc_addr;
+    runtime->active_input_addr = layout.input_addr;
+    runtime->active_output_addr = layout.output_addr;
+    runtime->active_scratch_addr = layout.scratch_addr;
+}
+
+static void tpu_load_identity_linear_params(uint32_t base_addr, uint32_t input_words, uint32_t output_words, uint32_t param_words){
+    const uint32_t stride_words = (input_words << 1) + 1u;
+
+    shared_mem_zero_words(base_addr, param_words);
+
+    for(uint32_t out_word = 0u;out_word < output_words;out_word++){
+        uint32_t src_word = (input_words != 0u) ? (out_word % input_words) : 0u;
+        volatile uint32_t* param_base = shared_word_ptr(base_addr + ((out_word * stride_words) << 2));
+        param_base[src_word * 2u] = 0x00000100u;
+        param_base[(src_word * 2u) + 1u] = 0x01000000u;
+    }
+}
+
+static void tpu_load_sparse_identity_linear_params(uint32_t base_addr, uint32_t input_words, uint32_t output_word_start, uint32_t output_words){
+    const uint32_t stride_words = (input_words << 1) + 1u;
+
+    shared_mem_zero_words(base_addr, output_words * stride_words);
+
+    for(uint32_t out_word = 0u;out_word < output_words;out_word++){
+        uint32_t global_out_word = output_word_start + out_word;
+        uint32_t src_word = (input_words != 0u) ? (global_out_word % input_words) : 0u;
+        volatile uint32_t* param_base = shared_word_ptr(base_addr + ((out_word * stride_words) << 2));
+        param_base[src_word * 2u] = 0x00000100u;
+        param_base[(src_word * 2u) + 1u] = 0x01000000u;
+    }
+}
+
+#if !TPU_RUNTIME_PARAM_POOL_PRELOADED
+#if TPU_RUNTIME_USE_EXPORTED_PARAMS_Q8_8
+static void tpu_load_mlp_key_layer_params(void){
+    shared_mem_write_words(TPU_PARAM_POOL_MLP_KEY_BASE, g_tpu_param_mlp_key_l0, TPU_PARAM_POOL_MLP_KEY_WORDS);
+    shared_mem_write_words(TPU_PARAM_POOL_MLP_KEY_L1_BASE, g_tpu_param_mlp_key_l1, TPU_PARAM_POOL_MLP_KEY_L1_WORDS);
+    shared_mem_write_words(TPU_PARAM_POOL_MLP_KEY_L2_BASE, g_tpu_param_mlp_key_l2, TPU_PARAM_POOL_MLP_KEY_L2_WORDS);
+    shared_mem_write_words(TPU_PARAM_POOL_MLP_KEY_L3_BASE, g_tpu_param_mlp_key_l3, TPU_PARAM_POOL_MLP_KEY_L3_WORDS);
+    shared_mem_write_words(TPU_PARAM_POOL_MLP_KEY_L4_BASE, g_tpu_param_mlp_key_l4, TPU_PARAM_POOL_MLP_KEY_L4_WORDS);
+}
+
+static void tpu_load_mlp_other_layer_params(void){
+    shared_mem_write_words(TPU_PARAM_POOL_MLP_OTHER_BASE, g_tpu_param_mlp_other_l0, TPU_PARAM_POOL_MLP_OTHER_WORDS);
+    shared_mem_write_words(TPU_PARAM_POOL_MLP_OTHER_L1_BASE, g_tpu_param_mlp_other_l1, TPU_PARAM_POOL_MLP_OTHER_L1_WORDS);
+}
+
+static void tpu_load_classifier_layer_params(void){
+    shared_mem_write_words(TPU_PARAM_POOL_CLASSIFIER_L0_BASE + (0u * TPU_PARAM_POOL_CLASSIFIER_L0_STRIDE_BYTES), g_tpu_param_classifier_l0_chunk0, TPU_PARAM_POOL_CLASSIFIER_L0_WORDS);
+    shared_mem_write_words(TPU_PARAM_POOL_CLASSIFIER_L0_BASE + (1u * TPU_PARAM_POOL_CLASSIFIER_L0_STRIDE_BYTES), g_tpu_param_classifier_l0_chunk1, TPU_PARAM_POOL_CLASSIFIER_L0_WORDS);
+    shared_mem_write_words(TPU_PARAM_POOL_CLASSIFIER_L0_BASE + (2u * TPU_PARAM_POOL_CLASSIFIER_L0_STRIDE_BYTES), g_tpu_param_classifier_l0_chunk2, TPU_PARAM_POOL_CLASSIFIER_L0_WORDS);
+    shared_mem_write_words(TPU_PARAM_POOL_CLASSIFIER_L0_BASE + (3u * TPU_PARAM_POOL_CLASSIFIER_L0_STRIDE_BYTES), g_tpu_param_classifier_l0_chunk3, TPU_PARAM_POOL_CLASSIFIER_L0_WORDS);
+    shared_mem_write_words(TPU_PARAM_POOL_CLASSIFIER_L0_BASE + (4u * TPU_PARAM_POOL_CLASSIFIER_L0_STRIDE_BYTES), g_tpu_param_classifier_l0_chunk4, TPU_PARAM_POOL_CLASSIFIER_L0_WORDS);
+    shared_mem_write_words(TPU_PARAM_POOL_CLASSIFIER_L0_BASE + (5u * TPU_PARAM_POOL_CLASSIFIER_L0_STRIDE_BYTES), g_tpu_param_classifier_l0_chunk5, TPU_PARAM_POOL_CLASSIFIER_L0_WORDS);
+    shared_mem_write_words(TPU_PARAM_POOL_CLASSIFIER_L0_BASE + (6u * TPU_PARAM_POOL_CLASSIFIER_L0_STRIDE_BYTES), g_tpu_param_classifier_l0_chunk6, TPU_PARAM_POOL_CLASSIFIER_L0_WORDS);
+    shared_mem_write_words(TPU_PARAM_POOL_CLASSIFIER_L0_BASE + (7u * TPU_PARAM_POOL_CLASSIFIER_L0_STRIDE_BYTES), g_tpu_param_classifier_l0_chunk7, TPU_PARAM_POOL_CLASSIFIER_L0_WORDS);
+
+    shared_mem_write_words(TPU_PARAM_POOL_CLASSIFIER_L1_BASE + (0u * TPU_PARAM_POOL_CLASSIFIER_L1_STRIDE_BYTES), g_tpu_param_classifier_l1_chunk0, TPU_PARAM_POOL_CLASSIFIER_L1_WORDS);
+    shared_mem_write_words(TPU_PARAM_POOL_CLASSIFIER_L1_BASE + (1u * TPU_PARAM_POOL_CLASSIFIER_L1_STRIDE_BYTES), g_tpu_param_classifier_l1_chunk1, TPU_PARAM_POOL_CLASSIFIER_L1_WORDS);
+    shared_mem_write_words(TPU_PARAM_POOL_CLASSIFIER_L1_BASE + (2u * TPU_PARAM_POOL_CLASSIFIER_L1_STRIDE_BYTES), g_tpu_param_classifier_l1_chunk2, TPU_PARAM_POOL_CLASSIFIER_L1_WORDS);
+    shared_mem_write_words(TPU_PARAM_POOL_CLASSIFIER_L1_BASE + (3u * TPU_PARAM_POOL_CLASSIFIER_L1_STRIDE_BYTES), g_tpu_param_classifier_l1_chunk3, TPU_PARAM_POOL_CLASSIFIER_L1_WORDS);
+
+    shared_mem_write_words(TPU_PARAM_POOL_CLASSIFIER_L2_BASE, g_tpu_param_classifier_l2, TPU_PARAM_POOL_CLASSIFIER_L2_WORDS);
+    shared_mem_write_words(TPU_PARAM_POOL_CLASSIFIER_L3_BASE, g_tpu_param_classifier_l3, TPU_PARAM_POOL_CLASSIFIER_L3_WORDS);
+}
+#else
+static void tpu_load_mlp_key_layer_params(void){
+    shared_mem_write_words(TPU_PARAM_POOL_MLP_KEY_BASE, g_param_blob_mlp_key, TPU_PARAM_POOL_MLP_KEY_WORDS);
+    tpu_load_identity_linear_params(TPU_PARAM_POOL_MLP_KEY_L1_BASE, 16u, 32u, TPU_PARAM_POOL_MLP_KEY_L1_WORDS);
+    tpu_load_identity_linear_params(TPU_PARAM_POOL_MLP_KEY_L2_BASE, 32u, 64u, TPU_PARAM_POOL_MLP_KEY_L2_WORDS);
+    tpu_load_identity_linear_params(TPU_PARAM_POOL_MLP_KEY_L3_BASE, 64u, 32u, TPU_PARAM_POOL_MLP_KEY_L3_WORDS);
+    tpu_load_identity_linear_params(TPU_PARAM_POOL_MLP_KEY_L4_BASE, 32u, 16u, TPU_PARAM_POOL_MLP_KEY_L4_WORDS);
+}
+
+static void tpu_load_mlp_other_layer_params(void){
+    tpu_load_identity_linear_params(TPU_PARAM_POOL_MLP_OTHER_BASE, 3u, 16u, TPU_PARAM_POOL_MLP_OTHER_WORDS);
+    tpu_load_identity_linear_params(TPU_PARAM_POOL_MLP_OTHER_L1_BASE, 16u, 16u, TPU_PARAM_POOL_MLP_OTHER_L1_WORDS);
+}
+
+static void tpu_load_classifier_layer_params(void){
+    for(uint32_t chunk = 0u;chunk < TPU_CLASSIFIER_L0_CHUNKS;chunk++){
+        uint32_t base_addr = TPU_PARAM_POOL_CLASSIFIER_L0_BASE + (chunk * TPU_PARAM_POOL_CLASSIFIER_L0_STRIDE_BYTES);
+        uint32_t output_start = chunk * TPU_CLASSIFIER_L0_CHUNK_WORDS;
+        tpu_load_sparse_identity_linear_params(base_addr, TPU_CLASSIFIER_L0_INPUT_WORDS, output_start, TPU_CLASSIFIER_L0_CHUNK_WORDS);
+    }
+
+    for(uint32_t chunk = 0u;chunk < TPU_CLASSIFIER_L1_CHUNKS;chunk++){
+        uint32_t base_addr = TPU_PARAM_POOL_CLASSIFIER_L1_BASE + (chunk * TPU_PARAM_POOL_CLASSIFIER_L1_STRIDE_BYTES);
+        uint32_t output_start = chunk * TPU_CLASSIFIER_L1_CHUNK_WORDS;
+        tpu_load_sparse_identity_linear_params(base_addr, TPU_CLASSIFIER_L1_INPUT_WORDS, output_start, TPU_CLASSIFIER_L1_CHUNK_WORDS);
+    }
+
+    tpu_load_identity_linear_params(TPU_PARAM_POOL_CLASSIFIER_L2_BASE, TPU_CLASSIFIER_L2_INPUT_WORDS, TPU_CLASSIFIER_L2_OUTPUT_WORDS, TPU_PARAM_POOL_CLASSIFIER_L2_WORDS);
+    tpu_load_identity_linear_params(TPU_PARAM_POOL_CLASSIFIER_L3_BASE, TPU_CLASSIFIER_L3_INPUT_WORDS, TPU_CLASSIFIER_L3_OUTPUT_WORDS, TPU_PARAM_POOL_CLASSIFIER_L3_WORDS);
+}
+#endif
+#endif
+
+void tpu_runtime_init(TPURuntime* runtime, uint32_t regs_baseaddr){
+    runtime->regs_baseaddr = regs_baseaddr;
+    runtime->active_buf_id = 0u;
+    g_shared_mem_evict_sink = 0u;
+    g_shared_mem_evict_epoch = 0u;
+    tpu_runtime_refresh_active_layout(runtime);
+}
+
+const TPUNetMeta* tpu_get_net_meta(uint32_t net_id){
+    for(uint32_t i = 0u;i < (sizeof(g_tpu_net_meta) / sizeof(g_tpu_net_meta[0]));i++){
+        if(g_tpu_net_meta[i].net_id == net_id){
+            return &g_tpu_net_meta[i];
+        }
+    }
+    return (const TPUNetMeta*)0;
+}
+
+TPUBufferLayout tpu_get_buffer_layout(uint8_t buf_id){
+    TPUBufferLayout layout;
+
+    if((buf_id & 0x01u) != 0u){
+        layout.desc_addr = TPU_DESC1_BASE;
+        layout.input_addr = TPU_IN_BUF1_BASE;
+        layout.output_addr = TPU_OUT_BUF1_BASE;
+        layout.scratch_addr = TPU_SCRATCH1_BASE;
+    }else{
+        layout.desc_addr = TPU_DESC0_BASE;
+        layout.input_addr = TPU_IN_BUF0_BASE;
+        layout.output_addr = TPU_OUT_BUF0_BASE;
+        layout.scratch_addr = TPU_SCRATCH0_BASE;
+    }
+
+    return layout;
+}
+
+void tpu_select_desc_buffer(TPURuntime* runtime, uint8_t buf_id){
+    runtime->active_buf_id = (uint8_t)(buf_id & 0x01u);
+    tpu_runtime_refresh_active_layout(runtime);
+}
+
+void tpu_build_desc(TPUDesc* desc, uint32_t net_id, uint32_t input_addr, uint32_t output_addr, uint32_t scratch_addr, uint32_t flags){
+    const TPUNetMeta* meta = tpu_get_net_meta(net_id);
+
+    desc->net_id = net_id;
+    desc->input_addr = input_addr;
+    desc->output_addr = output_addr;
+    desc->param_addr = tpu_param_pool_base(net_id);
+    desc->scratch_addr = scratch_addr;
+    desc->flags = flags;
+
+    if(meta == (const TPUNetMeta*)0){
+        desc->param_addr = 0u;
+        desc->input_words = 0u;
+        desc->output_words = 0u;
+        return;
+    }
+
+    desc->input_words = meta->input_words;
+    desc->output_words = meta->output_words;
+}
+
+void tpu_build_cnn1d_desc(TPUDesc* desc, uint32_t output_addr, uint32_t scratch_addr, uint32_t flags){
+    tpu_build_desc(desc,
+        NET_ID_CNN1D_RESERVED,
+        TPU_CNN1D_SIGNAL_BASE,
+        output_addr,
+        scratch_addr,
+        flags);
+}
+
+void tpu_clear_output_buffer(const TPUDesc* desc){
+    shared_mem_zero_words(desc->output_addr, desc->output_words);
+}
+
+int tpu_submit_desc(TPURuntime* runtime, const TPUDesc* desc){
+    volatile uint32_t* desc_slot = shared_word_ptr(runtime->active_desc_addr);
+
+    desc_slot[0] = desc->net_id;
+    desc_slot[1] = desc->input_addr;
+    desc_slot[2] = desc->output_addr;
+    desc_slot[3] = desc->param_addr;
+    desc_slot[4] = desc->scratch_addr;
+    desc_slot[5] = desc->input_words;
+    desc_slot[6] = desc->output_words;
+    desc_slot[7] = desc->flags;
+
+    tpu_clear_output_buffer(desc);
+    shared_mem_sync_for_device();
+
+#if TPU_RUNTIME_USE_MMIO
+    tpu_reg_write(runtime, TPU_REG_CTRL, TPU_CTRL_SOFT_RESET_MASK);
+    tpu_reg_write(runtime, TPU_REG_MODE, TPU_MODE_INFER);
+    tpu_reg_write(runtime, TPU_REG_NET_ID, desc->net_id);
+    tpu_reg_write(runtime, TPU_REG_DESC_LO, runtime->active_desc_addr);
+    tpu_reg_write(runtime, TPU_REG_DESC_HI, 0u);
+    tpu_reg_write(runtime, TPU_REG_CTRL, TPU_CTRL_START_MASK);
+#endif
+
+    return 0;
+}
+
+int tpu_wait_done(TPURuntime* runtime, uint32_t timeout){
+#if TPU_RUNTIME_USE_MMIO
+    uint32_t armed = 0u;
+
+    while(timeout--){
+        uint32_t status = tpu_reg_read(runtime, TPU_REG_STATUS);
+        if(status & TPU_STATUS_ERROR_MASK){
+            return -1;
+        }
+        if(status & TPU_STATUS_BUSY_MASK){
+            armed = 1u;
+        } else if((!armed) && ((status & TPU_STATUS_DONE_MASK) == 0u)){
+            // Observe the previous DONE latch clear before accepting the next completion.
+            armed = 1u;
+        }
+        if(armed && (status & TPU_STATUS_DONE_MASK)){
+            return 0;
+        }
+    }
+    return -2;
+#else
+    (void)runtime;
+    (void)timeout;
+    return 0;
+#endif
+}
+
+void tpu_load_param_pool(void){
+#if TPU_RUNTIME_PARAM_POOL_PRELOADED
+    shared_mem_sync_for_device();
+#else
+    tpu_load_mlp_key_layer_params();
+    tpu_load_mlp_other_layer_params();
+    tpu_load_classifier_layer_params();
+    shared_mem_sync_for_device();
+#endif
+}
+
+void tpu_prepare_demo_input(TPURuntime* runtime, uint32_t net_id){
+    const TPUNetMeta* meta = tpu_get_net_meta(net_id);
+
+    if(meta == (const TPUNetMeta*)0){
+        return;
+    }
+
+    switch(net_id){
+        case NET_ID_MLP_KEY:
+            shared_word_ptr(runtime->active_input_addr)[0] = 0x02000100u;
+            break;
+        case NET_ID_MLP_OTHER:
+            shared_word_ptr(runtime->active_input_addr)[0] = 0x00010002u;
+            shared_word_ptr(runtime->active_input_addr)[1] = 0x00030004u;
+            shared_word_ptr(runtime->active_input_addr)[2] = 0x00050006u;
+            break;
+        case NET_ID_CLASSIFIER:
+            shared_mem_fill_ramp(runtime->active_input_addr, meta->input_words, 0x0100u);
+            break;
+        case NET_ID_CNN1D_RESERVED:
+            shared_mem_zero_words(runtime->active_input_addr, meta->input_words);
+            break;
+        default:
+            shared_mem_zero_words(runtime->active_input_addr, meta->input_words);
+            break;
+    }
+}
+
+void tpu_read_output_words(const TPUDesc* desc, uint32_t* out_words, uint32_t max_words){
+    uint32_t dump_words = desc->output_words;
+    if(dump_words > max_words){
+        dump_words = max_words;
+    }
+
+    shared_mem_sync_for_cpu();
+
+    for(uint32_t i = 0u;i < dump_words;i++){
+        out_words[i] = shared_word_ptr(desc->output_addr)[i];
+    }
+}

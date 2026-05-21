@@ -1,0 +1,168 @@
+{
+  "checkpoint": "/home/jjt/soc/\u7b97\u6cd5/Breathrecognitionbest/checkpoints/best_model.pth",
+  "csv_dir": "/home/jjt/soc/\u7b97\u6cd5/Breathrecognitionbest/csv",
+  "loader": "torchzip",
+  "param_clip_counts": {
+    "conv1_b": 0,
+    "conv1_w": 0,
+    "conv2_b": 0,
+    "conv2_w": 0,
+    "conv3_b": 0,
+    "conv3_w": 0,
+    "conv4_b": 0,
+    "conv4_w": 0,
+    "film_l0_b": 0,
+    "film_l0_w": 0,
+    "film_l2_b": 0,
+    "film_l2_w": 0
+  },
+  "sample_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "samples": [
+    {
+      "classifier_final_out_words": [
+        "0xFE3C01D6",
+        "0xFEA301F9"
+      ],
+      "cpu_cnn_first_words": [
+        "0x0022000E",
+        "0x00700008",
+        "0x004A0056",
+        "0x0094009E",
+        "0x00670064",
+        "0x007F0084",
+        "0x000B008B",
+        "0x000B006C"
+      ],
+      "feature_clip_count": 0,
+      "feature_words": [
+        "0x008EFF18",
+        "0x006A00FB",
+        "0xFF44FECA",
+        "0x0000008E"
+      ],
+      "label": 2,
+      "logits_q8_8": [
+        470,
+        -452,
+        505,
+        -349
+      ],
+      "pred_argmax": 2,
+      "raw_feature_max_abs_diff_vs_csv": 0.003155859187245369,
+      "raw_feature_mean_abs_diff_vs_csv": 0.0004384369240142405,
+      "sample_index": 0,
+      "signal_clip_count": 0
+    },
+    {
+      "classifier_final_out_words": [
+        "0x0603F935",
+        "0xFD16F6DE"
+      ],
+      "cpu_cnn_first_words": [
+        "0x00E90053",
+        "0x003A018C",
+        "0x00580000",
+        "0x00320000",
+        "0x001C000D",
+        "0x0002001F",
+        "0x01630000",
+        "0x01890000"
+      ],
+      "feature_clip_count": 0,
+      "feature_words": [
+        "0xFF2C0179",
+        "0xFF4DFF4F",
+        "0xFFD8FFD8",
+        "0x0000FF43"
+      ],
+      "label": 1,
+      "logits_q8_8": [
+        -1739,
+        1539,
+        -2338,
+        -746
+      ],
+      "pred_argmax": 1,
+      "raw_feature_max_abs_diff_vs_csv": 0.018457550555467606,
+      "raw_feature_mean_abs_diff_vs_csv": 0.0029393987933872268,
+      "sample_index": 1,
+      "signal_clip_count": 0
+    },
+    {
+      "classifier_final_out_words": [
+        "0xFE8803A0",
+        "0xFF88FE98"
+      ],
+      "cpu_cnn_first_words": [
+        "0x003E0048",
+        "0x006E007B",
+        "0x006B0005",
+        "0x00080004",
+        "0x004E0011",
+        "0x0029002E",
+        "0x007C0010",
+        "0x00870000"
+      ],
+      "feature_clip_count": 0,
+      "feature_words": [
+        "0xFF8A00AE",
+        "0xFF85FF8F",
+        "0xFFB2FFDD",
+        "0x0000FF73"
+      ],
+      "label": 0,
+      "logits_q8_8": [
+        928,
+        -376,
+        -360,
+        -120
+      ],
+      "pred_argmax": 0,
+      "raw_feature_max_abs_diff_vs_csv": 0.015756022185087204,
+      "raw_feature_mean_abs_diff_vs_csv": 0.0025753652153071016,
+      "sample_index": 2,
+      "signal_clip_count": 0
+    },
+    {
+      "classifier_final_out_words": [
+        "0xFD5AFF07",
+        "0xFDFF065D"
+      ],
+      "cpu_cnn_first_words": [
+        "0x00660001",
+        "0x00B50007",
+        "0x004C00E2",
+        "0x013F0093",
+        "0x00860160",
+        "0x00820143",
+        "0x00030060",
+        "0x00840118"
+      ],
+      "feature_clip_count": 0,
+      "feature_words": [
+        "0x0217FF18",
+        "0x0206018B",
+        "0xFFAA000C",
+        "0x00000212"
+      ],
+      "label": 2,
+      "logits_q8_8": [
+        -249,
+        -678,
+        1629,
+        -513
+      ],
+      "pred_argmax": 2,
+      "raw_feature_max_abs_diff_vs_csv": 0.006343688815832138,
+      "raw_feature_mean_abs_diff_vs_csv": 0.0010454777802806348,
+      "sample_index": 3,
+      "signal_clip_count": 0
+    }
+  ],
+  "scale": 256
+}

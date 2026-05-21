@@ -1,0 +1,92 @@
+# TinyTPU IMEM (32-bit opcode) from mlp_2_2_1_q8_8.schedule.json
+# 59 instructions (wait commands excluded)
+
+[00] 0001c462  forward_layer1.load_w1_shadow  (ub_read)
+       note: Load W1^T through the top boundary into the PE shadow weight path.
+[01] 00000000  forward_layer1.nop_w1_load_0  (nop)
+[02] 00000000  forward_layer1.nop_w1_load_1  (nop)
+[03] 00000000  forward_layer1.nop_w1_load_2  (nop)
+[04] 00000000  forward_layer1.nop_w1_load_3  (nop)
+[05] 00000001  forward_layer1.activate_w1  (control)
+[06] 00604802  forward_layer1.stream_x  (ub_read)
+       note: Run the first layer forward path: systolic -> bias -> leaky_relu.
+[07] 00e24882  forward_layer1.stream_b1  (ub_read)
+       note: Bias stream for layer 1. VPU writeback is expected to append H1 to UB.
+# [wait] forward_layer1.wait_h1_writeback — skipped (handled by sequencer)
+[08] 0001c292  transition_layer2.load_w2_shadow  (ub_read)
+       note: Load W2^T for the second layer forward pass.
+[09] 00000000  transition_layer2.nop_w2_load_0  (nop)
+[10] 00000000  transition_layer2.nop_w2_load_1  (nop)
+[11] 00000000  transition_layer2.nop_w2_load_2  (nop)
+[12] 00000000  transition_layer2.nop_w2_load_3  (nop)
+[13] 00000001  transition_layer2.activate_w2  (control)
+[14] 007848aa  transition_layer2.stream_h1  (ub_read)
+       note: Run layer 2 forward + loss gradient + activation derivative.
+[15] 007a28a2  transition_layer2.stream_b2  (ub_read)
+[16] 007b2842  transition_layer2.stream_y  (ub_read)
+       note: Loss module consumes Y while H2 stays transient in the VPU pipeline.
+[17] 00fd28a2  transition_layer2.load_old_b2  (ub_read)
+       note: Enable in-UB bias update while dZ2 streams out of the VPU.
+# [wait] transition_layer2.wait_dz2_writeback — skipped (handled by sequencer)
+[18] 00014292  backward_layer1.load_w2_backward  (ub_read)
+       note: Backward uses W2 without transpose.
+[19] 00000000  backward_layer1.nop_w2bwd_load_0  (nop)
+[20] 00000000  backward_layer1.nop_w2bwd_load_1  (nop)
+[21] 00000000  backward_layer1.nop_w2bwd_load_2  (nop)
+[22] 00000000  backward_layer1.nop_w2bwd_load_3  (nop)
+[23] 00000001  backward_layer1.activate_w2_backward  (control)
+[24] 000d4882  backward_layer1.load_old_b1  (ub_read)
+       note: Prime the in-UB B1 update path before the derivative stream starts.
+[25] 000828ea  backward_layer1.stream_dz2  (ub_read)
+       note: Run the derivative-only VPU path for layer 1 backward propagation.
+[26] 008c48aa  backward_layer1.stream_h1_for_derivative  (ub_read)
+       note: Start the H1 sign stream immediately after dH1 so the derivative stage sees aligned activations while B1 is already armed.
+# [wait] backward_layer1.wait_dz1_writeback — skipped (handled by sequencer)
+[27] 00014402  update_w1_tile_0.load_x_tile_to_top  (ub_read)
+       note: Use the top boundary as one side of the outer-product update tile.
+[28] 00000000  update_w1_tile_0.nop_x_load_0  (nop)
+[29] 00000000  update_w1_tile_0.nop_x_load_1  (nop)
+[30] 00000000  update_w1_tile_0.nop_x_load_2  (nop)
+[31] 00000000  update_w1_tile_0.nop_x_load_3  (nop)
+[32] 00000001  update_w1_tile_0.activate_x_tile  (control)
+[33] 0000c50a  update_w1_tile_0.load_dz1_tile_transposed  (ub_read)
+       note: Pure systolic outer-product tile for dW1.
+[34] 00864462  update_w1_tile_0.load_old_w1  (ub_read)
+       note: Consume old W1 so the in-UB gradient_descent block can update in place.
+# [wait] update_w1_tile_0.wait_w1_update — skipped (handled by sequencer)
+[35] 00014422  update_w1_tile_1.load_x_tile_to_top  (ub_read)
+       note: Use the top boundary as one side of the outer-product update tile.
+[36] 00000000  update_w1_tile_1.nop_x_load_0  (nop)
+[37] 00000000  update_w1_tile_1.nop_x_load_1  (nop)
+[38] 00000000  update_w1_tile_1.nop_x_load_2  (nop)
+[39] 00000000  update_w1_tile_1.nop_x_load_3  (nop)
+[40] 00000001  update_w1_tile_1.activate_x_tile  (control)
+[41] 0000c52a  update_w1_tile_1.load_dz1_tile_transposed  (ub_read)
+       note: Pure systolic outer-product tile for dW1.
+[42] 00864462  update_w1_tile_1.load_old_w1  (ub_read)
+       note: Consume old W1 so the in-UB gradient_descent block can update in place.
+# [wait] update_w1_tile_1.wait_w1_update — skipped (handled by sequencer)
+[43] 000144aa  update_w2_tile_0.load_h1_tile_to_top  (ub_read)
+       note: Use H1 tiles on the top boundary for the W2 outer product.
+[44] 00000000  update_w2_tile_0.nop_h1_load_0  (nop)
+[45] 00000000  update_w2_tile_0.nop_h1_load_1  (nop)
+[46] 00000000  update_w2_tile_0.nop_h1_load_2  (nop)
+[47] 00000000  update_w2_tile_0.nop_h1_load_3  (nop)
+[48] 00000001  update_w2_tile_0.activate_h1_tile  (control)
+[49] 0000a4ea  update_w2_tile_0.load_dz2_tile_transposed  (ub_read)
+       note: Pure systolic outer-product tile for dW2.
+[50] 00864292  update_w2_tile_0.load_old_w2  (ub_read)
+       note: Consume old W2 so the in-UB gradient_descent block can update in place.
+# [wait] update_w2_tile_0.wait_w2_update — skipped (handled by sequencer)
+[51] 000144ca  update_w2_tile_1.load_h1_tile_to_top  (ub_read)
+       note: Use H1 tiles on the top boundary for the W2 outer product.
+[52] 00000000  update_w2_tile_1.nop_h1_load_0  (nop)
+[53] 00000000  update_w2_tile_1.nop_h1_load_1  (nop)
+[54] 00000000  update_w2_tile_1.nop_h1_load_2  (nop)
+[55] 00000000  update_w2_tile_1.nop_h1_load_3  (nop)
+[56] 00000001  update_w2_tile_1.activate_h1_tile  (control)
+[57] 0000a4fa  update_w2_tile_1.load_dz2_tile_transposed  (ub_read)
+       note: Pure systolic outer-product tile for dW2.
+[58] 00864292  update_w2_tile_1.load_old_w2  (ub_read)
+       note: Consume old W2 so the in-UB gradient_descent block can update in place.
+# [wait] update_w2_tile_1.wait_w2_update — skipped (handled by sequencer)

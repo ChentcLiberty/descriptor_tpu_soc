@@ -1,0 +1,37 @@
+{
+  "name": "mlp_2_2_1_q8_8_xor",
+  "model_type": "mlp",
+  "batch_size": 4,
+  "input_dim": 2,
+  "layers": [
+    {
+      "name": "layer1",
+      "type": "linear",
+      "out_dim": 2,
+      "activation": "leaky_relu"
+    },
+    {
+      "name": "layer2",
+      "type": "linear",
+      "out_dim": 1,
+      "activation": "leaky_relu"
+    }
+  ],
+  "training": {
+    "enabled": true,
+    "loss": "mse",
+    "optimizer": "sgd"
+  },
+  "data_format": {
+    "type": "fixed_point",
+    "width_bits": 16,
+    "frac_bits": 8,
+    "signed": true
+  },
+  "hardware_target": {
+    "array_width": 2,
+    "lanes": 2,
+    "ub_depth_words": 128
+  },
+  "persist_output_activation": false
+}

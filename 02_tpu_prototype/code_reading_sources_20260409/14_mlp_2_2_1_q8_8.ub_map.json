@@ -1,0 +1,150 @@
+{
+  "allocator_version": "0.1",
+  "spec_name": "mlp_2_2_1_q8_8_xor",
+  "model_type": "mlp",
+  "data_format": {
+    "type": "fixed_point",
+    "width_bits": 16,
+    "frac_bits": 8,
+    "signed": true
+  },
+  "hardware_target": {
+    "array_width": 2,
+    "lanes": 2,
+    "ub_depth_words": 128
+  },
+  "allocated_words": 41,
+  "free_words": 87,
+  "tensors": [
+    {
+      "name": "X",
+      "role": "input",
+      "shape": [
+        4,
+        2
+      ],
+      "words": 8,
+      "storage": "ub",
+      "addr": 0,
+      "dtype": "Q8.8"
+    },
+    {
+      "name": "Y",
+      "role": "label",
+      "shape": [
+        4,
+        1
+      ],
+      "words": 4,
+      "storage": "ub",
+      "addr": 8,
+      "dtype": "Q8.8"
+    },
+    {
+      "name": "W1",
+      "role": "weight",
+      "shape": [
+        2,
+        2
+      ],
+      "words": 4,
+      "storage": "ub",
+      "addr": 12,
+      "dtype": "Q8.8"
+    },
+    {
+      "name": "B1",
+      "role": "bias",
+      "shape": [
+        2
+      ],
+      "words": 2,
+      "storage": "ub",
+      "addr": 16,
+      "dtype": "Q8.8"
+    },
+    {
+      "name": "W2",
+      "role": "weight",
+      "shape": [
+        1,
+        2
+      ],
+      "words": 2,
+      "storage": "ub",
+      "addr": 18,
+      "dtype": "Q8.8"
+    },
+    {
+      "name": "B2",
+      "role": "bias",
+      "shape": [
+        1
+      ],
+      "words": 1,
+      "storage": "ub",
+      "addr": 20,
+      "dtype": "Q8.8"
+    },
+    {
+      "name": "H1",
+      "role": "activation",
+      "shape": [
+        4,
+        2
+      ],
+      "words": 8,
+      "storage": "ub",
+      "addr": 21,
+      "dtype": "Q8.8"
+    },
+    {
+      "name": "H2",
+      "role": "activation",
+      "shape": [
+        4,
+        1
+      ],
+      "words": 4,
+      "storage": "ephemeral",
+      "addr": null,
+      "dtype": "Q8.8"
+    },
+    {
+      "name": "dZ2",
+      "role": "gradient_activation",
+      "shape": [
+        4,
+        1
+      ],
+      "words": 4,
+      "storage": "ub",
+      "addr": 29,
+      "dtype": "Q8.8"
+    },
+    {
+      "name": "dH1",
+      "role": "gradient_hidden",
+      "shape": [
+        4,
+        2
+      ],
+      "words": 8,
+      "storage": "ephemeral",
+      "addr": null,
+      "dtype": "Q8.8"
+    },
+    {
+      "name": "dZ1",
+      "role": "gradient_activation",
+      "shape": [
+        4,
+        2
+      ],
+      "words": 8,
+      "storage": "ub",
+      "addr": 33,
+      "dtype": "Q8.8"
+    }
+  ]
+}

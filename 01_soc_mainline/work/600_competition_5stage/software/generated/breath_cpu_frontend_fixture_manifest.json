@@ -1,0 +1,60 @@
+{
+  "checkpoint": "/home/jjt/soc/\u7b97\u6cd5/Breathrecognitionbest/checkpoints/best_model.pth",
+  "clipped_values": {
+    "cnn": 0,
+    "mlp_key": 0,
+    "mlp_other": 0,
+    "raw_key": 0
+  },
+  "csv_dir": "/home/jjt/soc/\u7b97\u6cd5/Breathrecognitionbest/csv",
+  "expected_label": 2,
+  "loader": "torchzip",
+  "normalized_features": [
+    -0.9081737399101257,
+    0.5538755655288696,
+    0.9811748266220093,
+    0.41590237617492676,
+    -1.2049651145935059,
+    -0.7345049381256104,
+    0.5566074848175049,
+    0.0
+  ],
+  "packed_words": {
+    "cnn_first4": [
+      "0x0024000F",
+      "0x0071000A",
+      "0x004B0058",
+      "0x009700A2"
+    ],
+    "cnn_last4": [
+      "0x003E0021",
+      "0x00A6003B",
+      "0x0005000D",
+      "0x002E0026"
+    ],
+    "mlp_key": [
+      "0x008EFF18"
+    ],
+    "mlp_other": [
+      "0x006A00FB",
+      "0xFF44FECC",
+      "0x0000008E"
+    ],
+    "raw_key": [
+      "0x008EFF18"
+    ]
+  },
+  "q_format": "Q8.8 packed two int16 lanes per uint32 word",
+  "raw_features": [
+    0.1953125,
+    0.001756217097863555,
+    0.0018352193292230368,
+    0.004078857600688934,
+    0.02849014662206173,
+    -1.91133713722229,
+    0.006452328525483608,
+    0.0
+  ],
+  "sample_index": 0,
+  "scale": 256.0
+}

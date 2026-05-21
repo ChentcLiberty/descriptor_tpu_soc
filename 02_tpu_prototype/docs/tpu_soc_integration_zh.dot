@@ -1,0 +1,122 @@
+digraph TinyTPUSoC_ZH {
+    graph [
+        rankdir=LR,
+        splines=ortho,
+        newrank=true,
+        compound=true,
+        pad=0.26,
+        nodesep=0.58,
+        ranksep=1.02,
+        bgcolor="#fbfaf6",
+        fontname="WenQuanYi Zen Hei",
+        labelloc=t,
+        labeljust=l,
+        outputorder=nodesfirst
+    ];
+
+    node [
+        shape=box,
+        style="rounded,filled",
+        color="#2e3a46",
+        penwidth=1.2,
+        fontname="WenQuanYi Zen Hei",
+        fontsize=13,
+        margin="0.20,0.12",
+        fillcolor="#fffdfa",
+        width=2.00,
+        height=0.78
+    ];
+
+    edge [
+        color="#4a5568",
+        penwidth=1.5,
+        arrowsize=0.72,
+        fontname="WenQuanYi Zen Hei",
+        fontsize=8.5
+    ];
+
+    host [label="主机 / PS\nAXI-Lite", fillcolor="#f7e7d0", group="ext"];
+    compiler [label="编译器\nschedule / imem", fillcolor="#f3efe4", group="ext"];
+    note [label="原型边界\n无 IRQ / DMA", style="rounded,dashed,filled", color="#7b8794", penwidth=1.1, fillcolor="#f1f5f9", group="ext"];
+
+    sys_obs [label="Sys 输出\nsys_data / valid", fillcolor="#e8f3eb", group="out"];
+    vpu_obs [label="VPU 输出\nvpu_data / valid", fillcolor="#e8f3eb", group="out"];
+
+    { rank=same; host compiler note }
+    host -> compiler [style=invis, weight=100, minlen=1];
+    compiler -> note [style=invis, weight=100, minlen=1];
+
+    subgraph cluster_soc {
+        label="tpu_soc 顶层";
+        color="#1f2937";
+        penwidth=1.5;
+        style="rounded,filled";
+        fillcolor="#f6f1e8";
+        fontname="WenQuanYi Zen Hei";
+        fontsize=16;
+
+        subgraph cluster_frontend {
+            label="tpu_frontend_axil";
+            color="#b7791f";
+            penwidth=1.3;
+            style="rounded,filled";
+            fillcolor="#fff6de";
+
+            axil [label="AXI-Lite / CSR\n控制 状态\nUB / IMEM / 参数", fillcolor="#fffdf7", width=2.35, height=0.98, group="f1"];
+            params [label="参数\nleak inv lr\npathway", fillcolor="#fffdf7", width=1.60, group="f2"];
+            seq [label="时序\nstart step\nbusy run", fillcolor="#fffdf7", width=1.60, group="f2"];
+            imem [label="指令存储\n64 x 32", fillcolor="#fffdf7", width=1.55, group="f2"];
+            cu [label="解码\nswitch ub_rd\nub_wr_host", fillcolor="#fffdf7", width=1.70, group="f3"];
+
+            { rank=same; axil }
+            { rank=same; params seq imem }
+            { rank=same; cu }
+            params -> seq [style=invis, weight=100, minlen=1];
+            seq -> imem [style=invis, weight=100, minlen=1];
+        }
+
+        subgraph cluster_core {
+            label="tpu Core";
+            color="#2c5282";
+            penwidth=1.3;
+            style="rounded,filled";
+            fillcolor="#eaf1fb";
+
+            ctrl [label="核心控制\nswitch ub_ptr\nparams", fillcolor="#fbfdff", width=1.75, group="c1"];
+            ub [label="统一缓冲\nhost 写入 / 数据", fillcolor="#fbfdff", width=1.85, group="c1"];
+            sys [label="Systolic\n矩阵乘法", fillcolor="#fbfdff", width=1.55, group="c2"];
+            vpu [label="VPU 训练\n激活 损失 梯度\n参数更新", fillcolor="#fbfdff", width=1.90, group="c2"];
+
+            { rank=same; ctrl ub }
+            { rank=same; sys vpu }
+            ctrl -> ub [style=invis, weight=100, minlen=1];
+            sys -> vpu [style=invis, weight=100, minlen=1];
+        }
+    }
+
+    { rank=same; sys_obs vpu_obs }
+    sys_obs -> vpu_obs [style=invis, weight=100, minlen=1];
+
+    host:e -> axil:w [xlabel="MMIO", color="#7b4f1d", fontcolor="#7b4f1d", penwidth=1.8];
+    compiler:e -> imem:w [xlabel="指令", color="#7b4f1d", fontcolor="#7b4f1d", penwidth=1.7];
+
+    axil:e -> params:w [color="#2563eb"];
+    axil:e -> seq:w [xlabel="CTRL", color="#2563eb", fontcolor="#2563eb"];
+    axil:s -> imem:w [color="#2563eb"];
+    axil:e -> ub:w [xlabel="Host 装载", color="#c2410c", fontcolor="#c2410c", penwidth=1.8];
+
+    imem:n -> seq:s [color="#2563eb"];
+    seq:e -> cu:w [color="#2563eb"];
+    cu:e -> ctrl:w [xlabel="控制", color="#2563eb", fontcolor="#2563eb"];
+    params:e -> ctrl:nw [color="#2563eb"];
+
+    ctrl:e -> ub:w [color="#0f766e"];
+    ub:e -> sys:w [xlabel="矩阵块", color="#0f766e", fontcolor="#0f766e"];
+    ub:e -> vpu:w [xlabel="训练数据", color="#0f766e", fontcolor="#0f766e"];
+    sys:s -> vpu:n [color="#0f766e", constraint=false];
+    vpu:w -> ub:s [color="#c2410c", constraint=false];
+    vpu:w -> seq:n [xlabel="完成", color="#15803d", fontcolor="#15803d", style=dashed, constraint=false];
+
+    sys:e -> sys_obs:w [color="#15803d", penwidth=1.7];
+    vpu:e -> vpu_obs:w [color="#15803d", penwidth=1.7];
+}

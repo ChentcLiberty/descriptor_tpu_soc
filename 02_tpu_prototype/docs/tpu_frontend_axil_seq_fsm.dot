@@ -1,0 +1,21 @@
+digraph seq_fsm {
+  graph [rankdir=LR, bgcolor="transparent", splines=true, nodesep=1.10, ranksep=1.15, pad=0.18, dpi=220];
+  node [shape=box, style="rounded,filled", penwidth=1.8, margin="0.34,0.24", fontname="DejaVu Sans", fontsize=27, color="#CBD6E2", fillcolor="#FFFFFF", fontcolor="#1B242F"];
+  edge [fontname="DejaVu Sans", fontsize=19, color="#2D70AB", penwidth=2.2, arrowsize=0.90];
+
+  reset [shape=circle, width=0.20, label="", fillcolor="#214263", color="#214263"];
+  idle [label="SEQ_IDLE\nseq_running=0"];
+  dispatch [label="SEQ_DISPATCH\nseq_instr_pulse=1"];
+  wait [label="SEQ_WAIT\nwait vpu_drain"];
+  advance [label="SEQ_ADVANCE\npc update / done"];
+
+  reset -> idle [label="reset"];
+  idle -> wait [label="step_pulse\nseq_instr=instr_w0\nbusy=1"];
+  idle -> dispatch [label="start_pulse\npc=0 ; seq_instr=imem[0]\nseq_running=1 ; busy=1"];
+  dispatch -> wait [label="seq_needs_wait"];
+  dispatch -> advance [label="!seq_needs_wait"];
+  wait -> advance [label="vpu_drain && seq_running"];
+  wait -> idle [label="vpu_drain && !seq_running\nbusy=0"];
+  advance -> dispatch [label="pc + 1 < imem_len\npc++ ; seq_instr=imem[pc+1]"];
+  advance -> idle [label="program end\nseq_running=0 ; busy=0"];
+}

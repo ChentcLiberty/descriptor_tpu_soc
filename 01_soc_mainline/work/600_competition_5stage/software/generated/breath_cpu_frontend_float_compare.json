@@ -1,0 +1,140 @@
+{
+  "checkpoint": "/home/jjt/soc/\u7b97\u6cd5/Breathrecognitionbest/checkpoints/best_model.pth",
+  "csv_dir": "/home/jjt/soc/\u7b97\u6cd5/Breathrecognitionbest/csv",
+  "loader": "torchzip",
+  "param_clip_counts": {
+    "conv1_b": 0,
+    "conv1_w": 0,
+    "conv2_b": 0,
+    "conv2_w": 0,
+    "conv3_b": 0,
+    "conv3_w": 0,
+    "conv4_b": 0,
+    "conv4_w": 0,
+    "film_l0_b": 0,
+    "film_l0_w": 0,
+    "film_l2_b": 0,
+    "film_l2_w": 0
+  },
+  "sample_indices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "samples": [
+    {
+      "feature_clip_count": 0,
+      "fixed_classifier_final_out_words": [
+        "0xFE3C01D6",
+        "0xFEA301F9"
+      ],
+      "fixed_logits_q8_8": [
+        470,
+        -452,
+        505,
+        -349
+      ],
+      "fixed_matches_float_argmax": true,
+      "fixed_matches_label": true,
+      "fixed_pred_argmax": 2,
+      "float_logits": [
+        1.86775803565979,
+        -1.7540676593780518,
+        1.989442229270935,
+        -1.372512936592102
+      ],
+      "float_matches_label": true,
+      "float_pred_argmax": 2,
+      "label": 2,
+      "raw_feature_max_abs_diff_vs_csv": 0.003155859187245369,
+      "sample_index": 0,
+      "signal_clip_count": 0
+    },
+    {
+      "feature_clip_count": 0,
+      "fixed_classifier_final_out_words": [
+        "0x0603F935",
+        "0xFD16F6DE"
+      ],
+      "fixed_logits_q8_8": [
+        -1739,
+        1539,
+        -2338,
+        -746
+      ],
+      "fixed_matches_float_argmax": true,
+      "fixed_matches_label": true,
+      "fixed_pred_argmax": 1,
+      "float_logits": [
+        -6.98375940322876,
+        6.1461029052734375,
+        -9.284199714660645,
+        -2.8723230361938477
+      ],
+      "float_matches_label": true,
+      "float_pred_argmax": 1,
+      "label": 1,
+      "raw_feature_max_abs_diff_vs_csv": 0.018457550555467606,
+      "sample_index": 1,
+      "signal_clip_count": 0
+    },
+    {
+      "feature_clip_count": 0,
+      "fixed_classifier_final_out_words": [
+        "0xFE8803A0",
+        "0xFF88FE98"
+      ],
+      "fixed_logits_q8_8": [
+        928,
+        -376,
+        -360,
+        -120
+      ],
+      "fixed_matches_float_argmax": true,
+      "fixed_matches_label": true,
+      "fixed_pred_argmax": 0,
+      "float_logits": [
+        3.600675106048584,
+        -1.4177745580673218,
+        -1.4004623889923096,
+        -0.4793660044670105
+      ],
+      "float_matches_label": true,
+      "float_pred_argmax": 0,
+      "label": 0,
+      "raw_feature_max_abs_diff_vs_csv": 0.015756022185087204,
+      "sample_index": 2,
+      "signal_clip_count": 0
+    },
+    {
+      "feature_clip_count": 0,
+      "fixed_classifier_final_out_words": [
+        "0xFD5AFF07",
+        "0xFDFF065D"
+      ],
+      "fixed_logits_q8_8": [
+        -249,
+        -678,
+        1629,
+        -513
+      ],
+      "fixed_matches_float_argmax": true,
+      "fixed_matches_label": true,
+      "fixed_pred_argmax": 2,
+      "float_logits": [
+        -0.9755945801734924,
+        -2.663149356842041,
+        6.249110698699951,
+        -2.010411024093628
+      ],
+      "float_matches_label": true,
+      "float_pred_argmax": 2,
+      "label": 2,
+      "raw_feature_max_abs_diff_vs_csv": 0.006343688815832138,
+      "sample_index": 3,
+      "signal_clip_count": 0
+    }
+  ],
+  "scale": 256
+}

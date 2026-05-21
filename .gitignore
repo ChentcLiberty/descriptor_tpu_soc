@@ -1,0 +1,37 @@
+# build outputs
+sim_build*
+*.daidir/
+csrc/
+AN.DB/
+
+# waves and debug
+*.fsdb
+*.vcd
+*.vpd
+*.wlf
+*.log
+verdiLog/
+nWaveLog/
+vfastLog/
+waveforms/
+
+# simulator/runtime junk
+ucli.key
+novas.conf
+novas.rc
+results.xml
+command.log
+simv
+simv_*
+
+# python/cache
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# editor
+*.swp
+*.swo
+
+# misc
+.DS_Store

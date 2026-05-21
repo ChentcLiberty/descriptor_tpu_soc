@@ -1,0 +1,885 @@
+{
+  "scheduler_version": "0.1",
+  "spec_name": "mlp_2_2_1_q8_8_xor",
+  "target": "tiny-tpu-2x2-stage-schedule",
+  "assumptions": [
+    "current RTL is still testbench-driven at the top level",
+    "command list is stage-level and not a cycle-accurate waveform program yet",
+    "current implementation targets a 2-layer MLP under the 2x2 / 2-lane prototype limits"
+  ],
+  "host_load_plan": [
+    {
+      "tensor": "X",
+      "addr": 0,
+      "shape": [
+        4,
+        2
+      ],
+      "words": 8
+    },
+    {
+      "tensor": "Y",
+      "addr": 8,
+      "shape": [
+        4,
+        1
+      ],
+      "words": 4
+    },
+    {
+      "tensor": "W1",
+      "addr": 12,
+      "shape": [
+        2,
+        2
+      ],
+      "words": 4
+    },
+    {
+      "tensor": "B1",
+      "addr": 16,
+      "shape": [
+        2
+      ],
+      "words": 2
+    },
+    {
+      "tensor": "W2",
+      "addr": 18,
+      "shape": [
+        1,
+        2
+      ],
+      "words": 2
+    },
+    {
+      "tensor": "B2",
+      "addr": 20,
+      "shape": [
+        1
+      ],
+      "words": 1
+    }
+  ],
+  "ub_allocation": {
+    "allocator_version": "0.1",
+    "spec_name": "mlp_2_2_1_q8_8_xor",
+    "model_type": "mlp",
+    "data_format": {
+      "type": "fixed_point",
+      "width_bits": 16,
+      "frac_bits": 8,
+      "signed": true
+    },
+    "hardware_target": {
+      "array_width": 2,
+      "lanes": 2,
+      "ub_depth_words": 128
+    },
+    "allocated_words": 41,
+    "free_words": 87,
+    "tensors": [
+      {
+        "name": "X",
+        "role": "input",
+        "shape": [
+          4,
+          2
+        ],
+        "words": 8,
+        "storage": "ub",
+        "addr": 0,
+        "dtype": "Q8.8"
+      },
+      {
+        "name": "Y",
+        "role": "label",
+        "shape": [
+          4,
+          1
+        ],
+        "words": 4,
+        "storage": "ub",
+        "addr": 8,
+        "dtype": "Q8.8"
+      },
+      {
+        "name": "W1",
+        "role": "weight",
+        "shape": [
+          2,
+          2
+        ],
+        "words": 4,
+        "storage": "ub",
+        "addr": 12,
+        "dtype": "Q8.8"
+      },
+      {
+        "name": "B1",
+        "role": "bias",
+        "shape": [
+          2
+        ],
+        "words": 2,
+        "storage": "ub",
+        "addr": 16,
+        "dtype": "Q8.8"
+      },
+      {
+        "name": "W2",
+        "role": "weight",
+        "shape": [
+          1,
+          2
+        ],
+        "words": 2,
+        "storage": "ub",
+        "addr": 18,
+        "dtype": "Q8.8"
+      },
+      {
+        "name": "B2",
+        "role": "bias",
+        "shape": [
+          1
+        ],
+        "words": 1,
+        "storage": "ub",
+        "addr": 20,
+        "dtype": "Q8.8"
+      },
+      {
+        "name": "H1",
+        "role": "activation",
+        "shape": [
+          4,
+          2
+        ],
+        "words": 8,
+        "storage": "ub",
+        "addr": 21,
+        "dtype": "Q8.8"
+      },
+      {
+        "name": "H2",
+        "role": "activation",
+        "shape": [
+          4,
+          1
+        ],
+        "words": 4,
+        "storage": "ephemeral",
+        "addr": null,
+        "dtype": "Q8.8"
+      },
+      {
+        "name": "dZ2",
+        "role": "gradient_activation",
+        "shape": [
+          4,
+          1
+        ],
+        "words": 4,
+        "storage": "ub",
+        "addr": 29,
+        "dtype": "Q8.8"
+      },
+      {
+        "name": "dH1",
+        "role": "gradient_hidden",
+        "shape": [
+          4,
+          2
+        ],
+        "words": 8,
+        "storage": "ephemeral",
+        "addr": null,
+        "dtype": "Q8.8"
+      },
+      {
+        "name": "dZ1",
+        "role": "gradient_activation",
+        "shape": [
+          4,
+          2
+        ],
+        "words": 8,
+        "storage": "ub",
+        "addr": 33,
+        "dtype": "Q8.8"
+      }
+    ]
+  },
+  "commands": [
+    {
+      "stage": "forward_layer1",
+      "name": "load_w1_shadow",
+      "kind": "ub_read",
+      "tensor": "W1",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 1,
+        "ub_rd_addr_in": 12,
+        "ub_rd_row_size": 2,
+        "ub_rd_col_size": 2,
+        "ub_rd_transpose": 1
+      },
+      "wait_after": 0,
+      "note": "Load W1^T through the top boundary into the PE shadow weight path."
+    },
+    {
+      "stage": "forward_layer1",
+      "name": "nop_w1_load_0",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "forward_layer1",
+      "name": "nop_w1_load_1",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "forward_layer1",
+      "name": "nop_w1_load_2",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "forward_layer1",
+      "name": "nop_w1_load_3",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "forward_layer1",
+      "name": "activate_w1",
+      "kind": "control",
+      "signals": {
+        "sys_switch_in": 1
+      }
+    },
+    {
+      "stage": "forward_layer1",
+      "name": "stream_x",
+      "kind": "ub_read",
+      "tensor": "X",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 0,
+        "ub_rd_addr_in": 0,
+        "ub_rd_row_size": 4,
+        "ub_rd_col_size": 2,
+        "ub_rd_transpose": 0,
+        "vpu_data_pathway": "1100"
+      },
+      "wait_after": 0,
+      "note": "Run the first layer forward path: systolic -> bias -> leaky_relu."
+    },
+    {
+      "stage": "forward_layer1",
+      "name": "stream_b1",
+      "kind": "ub_read",
+      "tensor": "B1",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 2,
+        "ub_rd_addr_in": 16,
+        "ub_rd_row_size": 4,
+        "ub_rd_col_size": 2,
+        "ub_rd_transpose": 0,
+        "vpu_data_pathway": "1100"
+      },
+      "wait_after": 1,
+      "note": "Bias stream for layer 1. VPU writeback is expected to append H1 to UB."
+    },
+    {
+      "stage": "forward_layer1",
+      "name": "wait_h1_writeback",
+      "kind": "wait",
+      "event": "vpu_drain",
+      "note": "H1 should now be available in the UB activation region."
+    },
+    {
+      "stage": "transition_layer2",
+      "name": "load_w2_shadow",
+      "kind": "ub_read",
+      "tensor": "W2",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 1,
+        "ub_rd_addr_in": 18,
+        "ub_rd_row_size": 1,
+        "ub_rd_col_size": 2,
+        "ub_rd_transpose": 1
+      },
+      "wait_after": 0,
+      "note": "Load W2^T for the second layer forward pass."
+    },
+    {
+      "stage": "transition_layer2",
+      "name": "nop_w2_load_0",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "transition_layer2",
+      "name": "nop_w2_load_1",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "transition_layer2",
+      "name": "nop_w2_load_2",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "transition_layer2",
+      "name": "nop_w2_load_3",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "transition_layer2",
+      "name": "activate_w2",
+      "kind": "control",
+      "signals": {
+        "sys_switch_in": 1
+      }
+    },
+    {
+      "stage": "transition_layer2",
+      "name": "stream_h1",
+      "kind": "ub_read",
+      "tensor": "H1",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 0,
+        "ub_rd_addr_in": 21,
+        "ub_rd_row_size": 4,
+        "ub_rd_col_size": 2,
+        "ub_rd_transpose": 0,
+        "vpu_data_pathway": "1111"
+      },
+      "wait_after": 0,
+      "note": "Run layer 2 forward + loss gradient + activation derivative."
+    },
+    {
+      "stage": "transition_layer2",
+      "name": "stream_b2",
+      "kind": "ub_read",
+      "tensor": "B2",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 2,
+        "ub_rd_addr_in": 20,
+        "ub_rd_row_size": 4,
+        "ub_rd_col_size": 1,
+        "ub_rd_transpose": 0,
+        "vpu_data_pathway": "1111"
+      },
+      "wait_after": 0
+    },
+    {
+      "stage": "transition_layer2",
+      "name": "stream_y",
+      "kind": "ub_read",
+      "tensor": "Y",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 3,
+        "ub_rd_addr_in": 8,
+        "ub_rd_row_size": 4,
+        "ub_rd_col_size": 1,
+        "ub_rd_transpose": 0,
+        "vpu_data_pathway": "1111"
+      },
+      "wait_after": 0,
+      "note": "Loss module consumes Y while H2 stays transient in the VPU pipeline."
+    },
+    {
+      "stage": "transition_layer2",
+      "name": "load_old_b2",
+      "kind": "ub_read",
+      "tensor": "B2",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 5,
+        "ub_rd_addr_in": 20,
+        "ub_rd_row_size": 4,
+        "ub_rd_col_size": 1,
+        "ub_rd_transpose": 0,
+        "vpu_data_pathway": "1111"
+      },
+      "wait_after": 1,
+      "note": "Enable in-UB bias update while dZ2 streams out of the VPU."
+    },
+    {
+      "stage": "transition_layer2",
+      "name": "wait_dz2_writeback",
+      "kind": "wait",
+      "event": "vpu_drain",
+      "note": "dZ2 should now be appended in UB and B2 should be updated in place."
+    },
+    {
+      "stage": "backward_layer1",
+      "name": "load_w2_backward",
+      "kind": "ub_read",
+      "tensor": "W2",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 1,
+        "ub_rd_addr_in": 18,
+        "ub_rd_row_size": 1,
+        "ub_rd_col_size": 2,
+        "ub_rd_transpose": 0
+      },
+      "wait_after": 0,
+      "note": "Backward uses W2 without transpose."
+    },
+    {
+      "stage": "backward_layer1",
+      "name": "nop_w2bwd_load_0",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "backward_layer1",
+      "name": "nop_w2bwd_load_1",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "backward_layer1",
+      "name": "nop_w2bwd_load_2",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "backward_layer1",
+      "name": "nop_w2bwd_load_3",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "backward_layer1",
+      "name": "activate_w2_backward",
+      "kind": "control",
+      "signals": {
+        "sys_switch_in": 1
+      }
+    },
+    {
+      "stage": "backward_layer1",
+      "name": "load_old_b1",
+      "kind": "ub_read",
+      "tensor": "B1",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 5,
+        "ub_rd_addr_in": 16,
+        "ub_rd_row_size": 4,
+        "ub_rd_col_size": 2,
+        "ub_rd_transpose": 0,
+        "vpu_data_pathway": "0001"
+      },
+      "wait_after": 0,
+      "note": "Prime the in-UB B1 update path before the derivative stream starts."
+    },
+    {
+      "stage": "backward_layer1",
+      "name": "stream_dz2",
+      "kind": "ub_read",
+      "tensor": "dZ2",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 0,
+        "ub_rd_addr_in": 29,
+        "ub_rd_row_size": 4,
+        "ub_rd_col_size": 1,
+        "ub_rd_transpose": 0,
+        "vpu_data_pathway": "0001"
+      },
+      "wait_after": 0,
+      "note": "Run the derivative-only VPU path for layer 1 backward propagation."
+    },
+    {
+      "stage": "backward_layer1",
+      "name": "stream_h1_for_derivative",
+      "kind": "ub_read",
+      "tensor": "H1",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 4,
+        "ub_rd_addr_in": 21,
+        "ub_rd_row_size": 4,
+        "ub_rd_col_size": 2,
+        "ub_rd_transpose": 0,
+        "vpu_data_pathway": "0001"
+      },
+      "wait_after": 1,
+      "note": "Start the H1 sign stream immediately after dH1 so the derivative stage sees aligned activations while B1 is already armed."
+    },
+    {
+      "stage": "backward_layer1",
+      "name": "wait_dz1_writeback",
+      "kind": "wait",
+      "event": "vpu_drain",
+      "note": "dZ1 should now be appended in UB and B1 should be updated in place."
+    },
+    {
+      "stage": "update_w1_tile_0",
+      "name": "load_x_tile_to_top",
+      "kind": "ub_read",
+      "tensor": "X",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 1,
+        "ub_rd_addr_in": 0,
+        "ub_rd_row_size": 2,
+        "ub_rd_col_size": 2,
+        "ub_rd_transpose": 0
+      },
+      "wait_after": 0,
+      "note": "Use the top boundary as one side of the outer-product update tile."
+    },
+    {
+      "stage": "update_w1_tile_0",
+      "name": "nop_x_load_0",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "update_w1_tile_0",
+      "name": "nop_x_load_1",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "update_w1_tile_0",
+      "name": "nop_x_load_2",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "update_w1_tile_0",
+      "name": "nop_x_load_3",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "update_w1_tile_0",
+      "name": "activate_x_tile",
+      "kind": "control",
+      "signals": {
+        "sys_switch_in": 1
+      }
+    },
+    {
+      "stage": "update_w1_tile_0",
+      "name": "load_dz1_tile_transposed",
+      "kind": "ub_read",
+      "tensor": "dZ1",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 0,
+        "ub_rd_addr_in": 33,
+        "ub_rd_row_size": 2,
+        "ub_rd_col_size": 2,
+        "ub_rd_transpose": 1,
+        "vpu_data_pathway": "0000"
+      },
+      "wait_after": 0,
+      "note": "Pure systolic outer-product tile for dW1."
+    },
+    {
+      "stage": "update_w1_tile_0",
+      "name": "load_old_w1",
+      "kind": "ub_read",
+      "tensor": "W1",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 6,
+        "ub_rd_addr_in": 12,
+        "ub_rd_row_size": 2,
+        "ub_rd_col_size": 2,
+        "ub_rd_transpose": 0,
+        "vpu_data_pathway": "0000"
+      },
+      "wait_after": 1,
+      "note": "Consume old W1 so the in-UB gradient_descent block can update in place."
+    },
+    {
+      "stage": "update_w1_tile_0",
+      "name": "wait_w1_update",
+      "kind": "wait",
+      "event": "vpu_drain"
+    },
+    {
+      "stage": "update_w1_tile_1",
+      "name": "load_x_tile_to_top",
+      "kind": "ub_read",
+      "tensor": "X",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 1,
+        "ub_rd_addr_in": 4,
+        "ub_rd_row_size": 2,
+        "ub_rd_col_size": 2,
+        "ub_rd_transpose": 0
+      },
+      "wait_after": 0,
+      "note": "Use the top boundary as one side of the outer-product update tile."
+    },
+    {
+      "stage": "update_w1_tile_1",
+      "name": "nop_x_load_0",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "update_w1_tile_1",
+      "name": "nop_x_load_1",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "update_w1_tile_1",
+      "name": "nop_x_load_2",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "update_w1_tile_1",
+      "name": "nop_x_load_3",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "update_w1_tile_1",
+      "name": "activate_x_tile",
+      "kind": "control",
+      "signals": {
+        "sys_switch_in": 1
+      }
+    },
+    {
+      "stage": "update_w1_tile_1",
+      "name": "load_dz1_tile_transposed",
+      "kind": "ub_read",
+      "tensor": "dZ1",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 0,
+        "ub_rd_addr_in": 37,
+        "ub_rd_row_size": 2,
+        "ub_rd_col_size": 2,
+        "ub_rd_transpose": 1,
+        "vpu_data_pathway": "0000"
+      },
+      "wait_after": 0,
+      "note": "Pure systolic outer-product tile for dW1."
+    },
+    {
+      "stage": "update_w1_tile_1",
+      "name": "load_old_w1",
+      "kind": "ub_read",
+      "tensor": "W1",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 6,
+        "ub_rd_addr_in": 12,
+        "ub_rd_row_size": 2,
+        "ub_rd_col_size": 2,
+        "ub_rd_transpose": 0,
+        "vpu_data_pathway": "0000"
+      },
+      "wait_after": 1,
+      "note": "Consume old W1 so the in-UB gradient_descent block can update in place."
+    },
+    {
+      "stage": "update_w1_tile_1",
+      "name": "wait_w1_update",
+      "kind": "wait",
+      "event": "vpu_drain"
+    },
+    {
+      "stage": "update_w2_tile_0",
+      "name": "load_h1_tile_to_top",
+      "kind": "ub_read",
+      "tensor": "H1",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 1,
+        "ub_rd_addr_in": 21,
+        "ub_rd_row_size": 2,
+        "ub_rd_col_size": 2,
+        "ub_rd_transpose": 0
+      },
+      "wait_after": 0,
+      "note": "Use H1 tiles on the top boundary for the W2 outer product."
+    },
+    {
+      "stage": "update_w2_tile_0",
+      "name": "nop_h1_load_0",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "update_w2_tile_0",
+      "name": "nop_h1_load_1",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "update_w2_tile_0",
+      "name": "nop_h1_load_2",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "update_w2_tile_0",
+      "name": "nop_h1_load_3",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "update_w2_tile_0",
+      "name": "activate_h1_tile",
+      "kind": "control",
+      "signals": {
+        "sys_switch_in": 1
+      }
+    },
+    {
+      "stage": "update_w2_tile_0",
+      "name": "load_dz2_tile_transposed",
+      "kind": "ub_read",
+      "tensor": "dZ2",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 0,
+        "ub_rd_addr_in": 29,
+        "ub_rd_row_size": 2,
+        "ub_rd_col_size": 1,
+        "ub_rd_transpose": 1,
+        "vpu_data_pathway": "0000"
+      },
+      "wait_after": 0,
+      "note": "Pure systolic outer-product tile for dW2."
+    },
+    {
+      "stage": "update_w2_tile_0",
+      "name": "load_old_w2",
+      "kind": "ub_read",
+      "tensor": "W2",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 6,
+        "ub_rd_addr_in": 18,
+        "ub_rd_row_size": 1,
+        "ub_rd_col_size": 2,
+        "ub_rd_transpose": 0,
+        "vpu_data_pathway": "0000"
+      },
+      "wait_after": 1,
+      "note": "Consume old W2 so the in-UB gradient_descent block can update in place."
+    },
+    {
+      "stage": "update_w2_tile_0",
+      "name": "wait_w2_update",
+      "kind": "wait",
+      "event": "vpu_drain"
+    },
+    {
+      "stage": "update_w2_tile_1",
+      "name": "load_h1_tile_to_top",
+      "kind": "ub_read",
+      "tensor": "H1",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 1,
+        "ub_rd_addr_in": 25,
+        "ub_rd_row_size": 2,
+        "ub_rd_col_size": 2,
+        "ub_rd_transpose": 0
+      },
+      "wait_after": 0,
+      "note": "Use H1 tiles on the top boundary for the W2 outer product."
+    },
+    {
+      "stage": "update_w2_tile_1",
+      "name": "nop_h1_load_0",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "update_w2_tile_1",
+      "name": "nop_h1_load_1",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "update_w2_tile_1",
+      "name": "nop_h1_load_2",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "update_w2_tile_1",
+      "name": "nop_h1_load_3",
+      "kind": "nop",
+      "signals": {}
+    },
+    {
+      "stage": "update_w2_tile_1",
+      "name": "activate_h1_tile",
+      "kind": "control",
+      "signals": {
+        "sys_switch_in": 1
+      }
+    },
+    {
+      "stage": "update_w2_tile_1",
+      "name": "load_dz2_tile_transposed",
+      "kind": "ub_read",
+      "tensor": "dZ2",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 0,
+        "ub_rd_addr_in": 31,
+        "ub_rd_row_size": 2,
+        "ub_rd_col_size": 1,
+        "ub_rd_transpose": 1,
+        "vpu_data_pathway": "0000"
+      },
+      "wait_after": 0,
+      "note": "Pure systolic outer-product tile for dW2."
+    },
+    {
+      "stage": "update_w2_tile_1",
+      "name": "load_old_w2",
+      "kind": "ub_read",
+      "tensor": "W2",
+      "signals": {
+        "ub_rd_start_in": 1,
+        "ub_ptr_select": 6,
+        "ub_rd_addr_in": 18,
+        "ub_rd_row_size": 1,
+        "ub_rd_col_size": 2,
+        "ub_rd_transpose": 0,
+        "vpu_data_pathway": "0000"
+      },
+      "wait_after": 1,
+      "note": "Consume old W2 so the in-UB gradient_descent block can update in place."
+    },
+    {
+      "stage": "update_w2_tile_1",
+      "name": "wait_w2_update",
+      "kind": "wait",
+      "event": "vpu_drain"
+    }
+  ]
+}

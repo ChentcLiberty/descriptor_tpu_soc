@@ -1,0 +1,19 @@
+digraph write_fsm {
+  graph [rankdir=LR, bgcolor="transparent", splines=true, nodesep=1.10, ranksep=1.15, pad=0.18, dpi=220];
+  node [shape=box, style="rounded,filled", penwidth=1.8, margin="0.34,0.24", fontname="DejaVu Sans", fontsize=27, color="#CBD6E2", fillcolor="#FFFFFF", fontcolor="#1B242F"];
+  edge [fontname="DejaVu Sans", fontsize=19, color="#2D70AB", penwidth=2.2, arrowsize=0.90];
+
+  reset [shape=circle, width=0.20, label="", fillcolor="#214263", color="#214263"];
+  idle [label="W_IDLE\naccept AW/W"];
+  wait_w [label="W_WAIT_W\nAW captured"];
+  wait_aw [label="W_WAIT_AW\nW captured"];
+  resp [label="W_RESP\nBVALID=1"];
+
+  reset -> idle [label="reset"];
+  idle -> resp [label="AWVALID && WVALID\naw_lat=AWADDR ; wd_lat=WDATA ; wr_fire=1"];
+  idle -> wait_w [label="AWVALID only\naw_lat=AWADDR"];
+  idle -> wait_aw [label="WVALID only\nwd_lat=WDATA"];
+  wait_w -> resp [label="WVALID\nwd_lat=WDATA ; wr_fire=1"];
+  wait_aw -> resp [label="AWVALID\naw_lat=AWADDR ; wr_fire=1"];
+  resp -> idle [label="BVALID && BREADY\nbvalid=0"];
+}

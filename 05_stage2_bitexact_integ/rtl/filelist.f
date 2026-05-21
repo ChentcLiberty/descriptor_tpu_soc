@@ -1,0 +1,17 @@
+/home/jjt/soc/my_soc/tpu_stage2_bitexact_integ/rtl/real_tpu/fixedpoint.sv
+/home/jjt/soc/my_soc/tpu_stage2_bitexact_integ/rtl/real_tpu/gradient_descent.sv
+/home/jjt/soc/my_soc/tpu_stage2_bitexact_integ/rtl/real_tpu/bias_child.sv
+/home/jjt/soc/my_soc/tpu_stage2_bitexact_integ/rtl/real_tpu/bias_parent.sv
+/home/jjt/soc/my_soc/tpu_stage2_bitexact_integ/rtl/real_tpu/leaky_relu_child.sv
+/home/jjt/soc/my_soc/tpu_stage2_bitexact_integ/rtl/real_tpu/leaky_relu_parent.sv
+/home/jjt/soc/my_soc/tpu_stage2_bitexact_integ/rtl/real_tpu/leaky_relu_derivative_child.sv
+/home/jjt/soc/my_soc/tpu_stage2_bitexact_integ/rtl/real_tpu/leaky_relu_derivative_parent.sv
+/home/jjt/soc/my_soc/tpu_stage2_bitexact_integ/rtl/real_tpu/loss_child.sv
+/home/jjt/soc/my_soc/tpu_stage2_bitexact_integ/rtl/real_tpu/loss_parent.sv
+/home/jjt/soc/my_soc/tpu_stage2_bitexact_integ/rtl/real_tpu/pe.sv
+/home/jjt/soc/my_soc/tpu_stage2_bitexact_integ/rtl/real_tpu/systolic.sv
+/home/jjt/soc/my_soc/tpu_stage2_bitexact_integ/rtl/real_tpu/vpu.sv
+/home/jjt/soc/my_soc/tpu_stage2_bitexact_integ/rtl/real_tpu/unified_buffer_v3.sv
+/home/jjt/soc/my_soc/tpu_stage2_bitexact_integ/rtl/real_tpu/tpu.sv
+/home/jjt/soc/my_soc/tpu_stage2_bitexact_integ/rtl/wrapper/tpu_stage2_tinytpu_exec.sv
+/home/jjt/soc/my_soc/tpu_stage2_bitexact_integ/rtl/wrapper/tpu_stage2_real_wrapper.sv

@@ -1,0 +1,204 @@
+{
+  "classifier_final_out_words": [
+    "0x015EFB51",
+    "0xFDD4061A"
+  ],
+  "classifier_l2_out_words": [
+    "0x00A90018",
+    "0x0000002D",
+    "0x00000158",
+    "0x00D70082",
+    "0x00000067",
+    "0x00000000",
+    "0x00000000",
+    "0x00800000",
+    "0x00BB004D",
+    "0x00000108",
+    "0x00AA0000",
+    "0x011703A7",
+    "0x00000012",
+    "0x00740000",
+    "0x001E0040",
+    "0x000000B8",
+    "0x00000000",
+    "0x0026018C",
+    "0x006D0000",
+    "0x00C40098",
+    "0x00000089",
+    "0x00FE0000",
+    "0x018D0000",
+    "0x01640122",
+    "0x00000000",
+    "0x00000112",
+    "0x01160000",
+    "0x021B0000",
+    "0x00580000",
+    "0x00000010",
+    "0x00000000",
+    "0x020D00D1"
+  ],
+  "mlp_key_out_words": [
+    "0x00000000",
+    "0x00000000",
+    "0x00060000",
+    "0x01E50000",
+    "0x00AD0000",
+    "0x00000000",
+    "0x00000112",
+    "0x00000060",
+    "0x00220000",
+    "0x00000000",
+    "0x010F01AC",
+    "0x00000090",
+    "0x00D20000",
+    "0x00240000",
+    "0x01060033",
+    "0x01DB018E"
+  ],
+  "mlp_other_out_words": [
+    "0x00410020",
+    "0x00000000",
+    "0x009D0000",
+    "0x00000088",
+    "0x000C0000",
+    "0x0000001A",
+    "0x008B0000",
+    "0x000E0008",
+    "0x00000003",
+    "0x000000F9",
+    "0x00040000",
+    "0x004C002F",
+    "0x00000062",
+    "0x0000010E",
+    "0x005400EF",
+    "0x000000CD"
+  ],
+  "param_regions": [
+    {
+      "base": "0x60000000",
+      "end": "0x600000C0",
+      "name": "g_tpu_param_mlp_key_l0",
+      "words": 48
+    },
+    {
+      "base": "0x60000400",
+      "end": "0x60001480",
+      "name": "g_tpu_param_mlp_key_l1",
+      "words": 1056
+    },
+    {
+      "base": "0x60002000",
+      "end": "0x60006100",
+      "name": "g_tpu_param_mlp_key_l2",
+      "words": 4160
+    },
+    {
+      "base": "0x60007000",
+      "end": "0x6000B080",
+      "name": "g_tpu_param_mlp_key_l3",
+      "words": 4128
+    },
+    {
+      "base": "0x6000C000",
+      "end": "0x6000D040",
+      "name": "g_tpu_param_mlp_key_l4",
+      "words": 1040
+    },
+    {
+      "base": "0x6000E000",
+      "end": "0x6000E1C0",
+      "name": "g_tpu_param_mlp_other_l0",
+      "words": 112
+    },
+    {
+      "base": "0x6000E400",
+      "end": "0x6000EC40",
+      "name": "g_tpu_param_mlp_other_l1",
+      "words": 528
+    },
+    {
+      "base": "0x60020000",
+      "end": "0x600250C0",
+      "name": "g_tpu_param_classifier_l0_chunk0",
+      "words": 5168
+    },
+    {
+      "base": "0x60026000",
+      "end": "0x6002B0C0",
+      "name": "g_tpu_param_classifier_l0_chunk1",
+      "words": 5168
+    },
+    {
+      "base": "0x6002C000",
+      "end": "0x600310C0",
+      "name": "g_tpu_param_classifier_l0_chunk2",
+      "words": 5168
+    },
+    {
+      "base": "0x60032000",
+      "end": "0x600370C0",
+      "name": "g_tpu_param_classifier_l0_chunk3",
+      "words": 5168
+    },
+    {
+      "base": "0x60038000",
+      "end": "0x6003D0C0",
+      "name": "g_tpu_param_classifier_l0_chunk4",
+      "words": 5168
+    },
+    {
+      "base": "0x6003E000",
+      "end": "0x600430C0",
+      "name": "g_tpu_param_classifier_l0_chunk5",
+      "words": 5168
+    },
+    {
+      "base": "0x60044000",
+      "end": "0x600490C0",
+      "name": "g_tpu_param_classifier_l0_chunk6",
+      "words": 5168
+    },
+    {
+      "base": "0x6004A000",
+      "end": "0x6004F0C0",
+      "name": "g_tpu_param_classifier_l0_chunk7",
+      "words": 5168
+    },
+    {
+      "base": "0x60050000",
+      "end": "0x60054040",
+      "name": "g_tpu_param_classifier_l1_chunk0",
+      "words": 4112
+    },
+    {
+      "base": "0x60055000",
+      "end": "0x60059040",
+      "name": "g_tpu_param_classifier_l1_chunk1",
+      "words": 4112
+    },
+    {
+      "base": "0x6005A000",
+      "end": "0x6005E040",
+      "name": "g_tpu_param_classifier_l1_chunk2",
+      "words": 4112
+    },
+    {
+      "base": "0x6005F000",
+      "end": "0x60063040",
+      "name": "g_tpu_param_classifier_l1_chunk3",
+      "words": 4112
+    },
+    {
+      "base": "0x60064000",
+      "end": "0x60068080",
+      "name": "g_tpu_param_classifier_l2",
+      "words": 4128
+    },
+    {
+      "base": "0x60069000",
+      "end": "0x60069208",
+      "name": "g_tpu_param_classifier_l3",
+      "words": 130
+    }
+  ]
+}

@@ -1,0 +1,357 @@
+"""
+AXI-Lite TPU SoC 多 epoch 训练收敛验证
+DUT: tpu_soc_top
+验证: 单次加载数据/IMEM后，重复 start 触发多轮训练，检查 XOR loss 下降并达到 4/4 正确分类
+"""
+import cocotb
+from cocotb.clock import Clock
+from cocotb.triggers import RisingEdge, ClockCycles
+from pathlib import Path
+import numpy as np
+
+FRAC_BITS = 8
+TRAIN_EPOCHS = 1
+LOSS_TARGET = 0.21
+DEBUG_MON = True
+
+# ---- Q8.8 helpers ----
+def to_fxp(v):
+    return int(round(v * (1 << FRAC_BITS))) & 0xFFFF
+
+
+def from_fxp(v):
+    if v >= (1 << 15):
+        v -= (1 << 16)
+    return float(v) / (1 << FRAC_BITS)
+
+
+def fxp(v):
+    return from_fxp(to_fxp(v))
+
+
+def fxpa(a):
+    return np.vectorize(fxp)(a)
+
+
+# ---- Training set & a fast-converging initialization found by Q8.8 sweep ----
+X = fxpa(np.array([[0.0, 0.0], [0.0, 1.0], [1.0, 0.0], [1.0, 1.0]]))
+Y = fxpa(np.array([0, 1, 1, 0], dtype=float))
+INIT_W1 = fxpa(np.array([[-0.43359375, 0.8203125], [0.63671875, -0.4140625]]))
+INIT_B1 = fxpa(np.array([-0.21484375, 0.39453125]))
+INIT_W2 = fxpa(np.array([0.66796875, 0.80859375]))
+INIT_B2 = fxpa(np.array([-0.1015625]))
+LEAK = fxp(0.5)
+INV_N2 = fxp(2.0 / 4)
+LR = fxp(0.125)
+EXPECTED_PRED = (0, 1, 1, 0)
+TILE_WIDTH = 2
+
+
+def leaky_relu(x):
+    return np.where(x >= 0, x, fxpa(x * LEAK))
+
+
+def leaky_relu_d(g, h):
+    return np.where(h >= 0, g, fxpa(g * LEAK))
+
+
+def forward_model(w1, b1, w2, b2):
+    z1 = fxpa(X @ w1.T + b1)
+    h1 = leaky_relu(z1)
+    z2 = fxpa(h1 @ w2.reshape(-1, 1) + b2)
+    h2 = leaky_relu(z2).flatten()
+    return h1, h2
+
+
+def backward_model(h1, h2, w2):
+    dz2 = fxpa((h2 - Y) * INV_N2)
+    dh1 = fxpa(dz2.reshape(-1, 1) @ w2.reshape(1, -1))
+    dz1 = leaky_relu_d(dh1, h1)
+    return dz2, dz1
+
+
+def fxp_mul_scalar(a, b):
+    return fxp(float(a) * float(b))
+
+
+def apply_update_scalar(param, grad, lr=LR):
+    return fxp(float(param) - fxp_mul_scalar(grad, lr))
+
+
+def update_model(w1, b1, w2, b2, h1, dz2, dz1):
+    w1 = np.array(w1, dtype=float, copy=True)
+    b1 = np.array(b1, dtype=float, copy=True)
+    w2 = np.array(w2, dtype=float, copy=True)
+    b2 = np.array(b2, dtype=float, copy=True)
+
+    for g in np.asarray(dz2).reshape(-1):
+        b2[0] = apply_update_scalar(b2[0], g)
+
+    for row in np.asarray(dz1):
+        for j in range(b1.shape[0]):
+            b1[j] = apply_update_scalar(b1[j], row[j])
+
+    for tile_start in range(0, len(dz2), TILE_WIDTH):
+        dz2_tile = np.asarray(dz2[tile_start:tile_start + TILE_WIDTH], dtype=float)
+        h1_tile = np.asarray(h1[tile_start:tile_start + TILE_WIDTH], dtype=float)
+        tile_grad_w2 = fxpa(dz2_tile.reshape(1, -1) @ h1_tile).reshape(-1)
+        for j, grad in enumerate(tile_grad_w2):
+            w2[j] = apply_update_scalar(w2[j], grad)
+
+    for tile_start in range(0, dz1.shape[0], TILE_WIDTH):
+        dz1_tile = np.asarray(dz1[tile_start:tile_start + TILE_WIDTH], dtype=float)
+        x_tile = np.asarray(X[tile_start:tile_start + TILE_WIDTH], dtype=float)
+        tile_grad_w1 = fxpa(dz1_tile.T @ x_tile)
+        for r in range(w1.shape[0]):
+            for c in range(w1.shape[1]):
+                w1[r, c] = apply_update_scalar(w1[r, c], tile_grad_w1[r, c])
+
+    return fxpa(w1), fxpa(b1), fxpa(w2), fxpa(b2)
+
+
+def mse_loss(h2):
+    diff = fxpa(h2 - Y)
+    sq = fxpa(diff * diff)
+    return float(np.mean(sq))
+
+
+def pred_bits(h2):
+    return tuple(1 if float(v) >= 0.5 else 0 for v in h2)
+
+
+async def axil_write(dut, addr, data):
+    await RisingEdge(dut.s_axil_aclk)
+    dut.s_axil_awaddr.value = addr
+    dut.s_axil_awvalid.value = 1
+    dut.s_axil_wdata.value = data & 0xFFFFFFFF
+    dut.s_axil_wstrb.value = 0xF
+    dut.s_axil_wvalid.value = 1
+    dut.s_axil_bready.value = 1
+    await RisingEdge(dut.s_axil_aclk)
+    dut.s_axil_awvalid.value = 0
+    dut.s_axil_wvalid.value = 0
+    while not dut.s_axil_bvalid.value:
+        await RisingEdge(dut.s_axil_aclk)
+    await RisingEdge(dut.s_axil_aclk)
+    dut.s_axil_bready.value = 0
+
+
+async def axil_read(dut, addr):
+    await RisingEdge(dut.s_axil_aclk)
+    dut.s_axil_araddr.value = addr
+    dut.s_axil_arvalid.value = 1
+    dut.s_axil_rready.value = 1
+    while not dut.s_axil_rvalid.value:
+        await RisingEdge(dut.s_axil_aclk)
+    val = int(dut.s_axil_rdata.value)
+    await RisingEdge(dut.s_axil_aclk)
+    dut.s_axil_arvalid.value = 0
+    dut.s_axil_rready.value = 0
+    return val
+
+
+async def ub_write_cycle(dut, d0, d1, push_mask):
+    if push_mask & 1:
+        await axil_write(dut, 0x020, d0 & 0xFFFF)
+    if push_mask & 2:
+        await axil_write(dut, 0x028, d1 & 0xFFFF)
+    if push_mask:
+        await axil_write(dut, 0x024, push_mask)
+
+
+async def load_all_data_axil(dut, x, y, w1, b1, w2, b2):
+    seq = [
+        (to_fxp(x[0][0]), 0, 1),
+        (to_fxp(x[1][0]), to_fxp(x[0][1]), 3),
+        (to_fxp(x[2][0]), to_fxp(x[1][1]), 3),
+        (to_fxp(x[3][0]), to_fxp(x[2][1]), 3),
+        (to_fxp(y[0]), to_fxp(x[3][1]), 3),
+        (to_fxp(y[1]), 0, 1),
+        (to_fxp(y[2]), 0, 1),
+        (to_fxp(y[3]), 0, 1),
+        (to_fxp(w1[0][0]), 0, 1),
+        (to_fxp(w1[1][0]), to_fxp(w1[0][1]), 3),
+        (to_fxp(b1[0]), to_fxp(w1[1][1]), 3),
+        (to_fxp(w2[0]), to_fxp(b1[1]), 3),
+        (to_fxp(b2[0]), to_fxp(w2[1]), 3),
+    ]
+    for d0, d1, mask in seq:
+        await ub_write_cycle(dut, d0, d1, mask)
+
+
+async def imem_load(dut, hex_path):
+    lines = Path(hex_path).read_text().strip().splitlines()
+    instrs = [int(line.strip(), 16) for line in lines if line.strip()]
+    for i, instr in enumerate(instrs):
+        await axil_write(dut, 0x030, i)
+        await axil_write(dut, 0x034, instr)
+        await axil_write(dut, 0x040, 1)
+    await axil_write(dut, 0x044, len(instrs))
+    return len(instrs)
+
+
+async def run_one_epoch(dut, epoch_idx):
+    await axil_write(dut, 0x000, 0x2)
+    for attempt in range(200):
+        await ClockCycles(dut.s_axil_aclk, 500)
+        status = await axil_read(dut, 0x004)
+        if not (status & 0x1):
+            cocotb.log.info(f"epoch {epoch_idx}: sequencer done after ~{attempt * 500} cycles")
+            await ClockCycles(dut.s_axil_aclk, 10)
+            return
+    raise TimeoutError(f"epoch {epoch_idx}: sequencer did not complete")
+
+
+def read_hw_params(dut):
+    ub = dut.dut.tpu_inst.ub_inst.ub_memory
+    w1_words = [int(ub[12 + i].value) & 0xFFFF for i in range(4)]
+    b1_words = [int(ub[16 + i].value) & 0xFFFF for i in range(2)]
+    w2_words = [int(ub[18 + i].value) & 0xFFFF for i in range(2)]
+    b2_words = [int(ub[20].value) & 0xFFFF]
+    w1 = np.array([from_fxp(w) for w in w1_words], dtype=float).reshape(2, 2)
+    b1 = np.array([from_fxp(w) for w in b1_words], dtype=float)
+    w2 = np.array([from_fxp(w) for w in w2_words], dtype=float)
+    b2 = np.array([from_fxp(w) for w in b2_words], dtype=float)
+    return w1, b1, w2, b2
+
+
+@cocotb.test()
+async def test_tpu_soc_train_convergence(dut):
+    cocotb.start_soon(Clock(dut.s_axil_aclk, 10, units="ns").start())
+
+    dut.s_axil_aresetn.value = 0
+    for sig in [dut.s_axil_awvalid, dut.s_axil_wvalid, dut.s_axil_bready,
+                dut.s_axil_arvalid, dut.s_axil_rready]:
+        sig.value = 0
+    dut.s_axil_awaddr.value = 0
+    dut.s_axil_wdata.value = 0
+    dut.s_axil_wstrb.value = 0
+    dut.s_axil_araddr.value = 0
+    await ClockCycles(dut.s_axil_aclk, 4)
+    dut.s_axil_aresetn.value = 1
+    await ClockCycles(dut.s_axil_aclk, 2)
+
+    await axil_write(dut, 0x050, to_fxp(LEAK))
+    await axil_write(dut, 0x054, to_fxp(INV_N2))
+    await axil_write(dut, 0x058, to_fxp(LR))
+
+    await load_all_data_axil(dut, X, Y, INIT_W1, INIT_B1, INIT_W2, INIT_B2)
+    cocotb.log.info("UB data loaded for convergence test")
+
+    imem_hex = Path(__file__).parent.parent / 'compiler/out/imem.hex'
+    n = await imem_load(dut, str(imem_hex))
+    cocotb.log.info(f"Loaded {n} instructions into IMEM")
+
+    ref_w1 = np.array(INIT_W1, dtype=float, copy=True)
+    ref_b1 = np.array(INIT_B1, dtype=float, copy=True)
+    ref_w2 = np.array(INIT_W2, dtype=float, copy=True)
+    ref_b2 = np.array(INIT_B2, dtype=float, copy=True)
+
+    _, init_h2 = forward_model(ref_w1, ref_b1, ref_w2, ref_b2)
+    init_loss = mse_loss(init_h2)
+    init_pred = pred_bits(init_h2)
+    cocotb.log.info(f"epoch 0: ref loss={init_loss:.4f} pred={init_pred} h2={[round(float(v), 4) for v in init_h2]}")
+
+    loss_history = []
+    pred_history = []
+
+    async def monitor_lrd(epoch_limit=1):
+        while True:
+            await RisingEdge(dut.s_axil_aclk)
+            try:
+                vp = int(dut.dut.tpu_inst.vpu_inst.vpu_data_pathway.value)
+                v1 = int(dut.dut.tpu_inst.vpu_inst.lr_d_valid_1_in.value)
+                v2 = int(dut.dut.tpu_inst.vpu_inst.lr_d_valid_2_in.value)
+                o1 = int(dut.dut.tpu_inst.vpu_inst.lr_d_valid_1_out.value)
+                o2 = int(dut.dut.tpu_inst.vpu_inst.lr_d_valid_2_out.value)
+            except Exception:
+                continue
+            if vp == 1 and (v1 or v2 or o1 or o2):
+                def sx(sig):
+                    return from_fxp(int(sig.value) & 0xFFFF)
+                cocotb.log.info(
+                    f"LRD mon: din1={sx(dut.dut.tpu_inst.vpu_inst.lr_d_data_1_in):.4f} "
+                    f"Hin1={sx(dut.dut.tpu_inst.vpu_inst.lr_d_H_in_1):.4f} vin1={v1} vout1={o1} dout1={sx(dut.dut.tpu_inst.vpu_inst.lr_d_data_1_out):.4f} | "
+                    f"din2={sx(dut.dut.tpu_inst.vpu_inst.lr_d_data_2_in):.4f} "
+                    f"Hin2={sx(dut.dut.tpu_inst.vpu_inst.lr_d_H_in_2):.4f} vin2={v2} vout2={o2} dout2={sx(dut.dut.tpu_inst.vpu_inst.lr_d_data_2_out):.4f}"
+                )
+
+    mon = cocotb.start_soon(monitor_lrd()) if DEBUG_MON else None
+
+    async def monitor_gd():
+        seen = 0
+        while True:
+            await RisingEdge(dut.s_axil_aclk)
+            try:
+                ub = dut.dut.tpu_inst.ub_inst
+                gv0 = int(ub.grad_descent_valid_in[0].value)
+                gv1 = int(ub.grad_descent_valid_in[1].value)
+                gd0 = int(ub.grad_descent_done_out[0].value)
+                gd1 = int(ub.grad_descent_done_out[1].value)
+                addr0 = int(ub.gd_wr_lane_addr[0].value)
+                addr1 = int(ub.gd_wr_lane_addr[1].value)
+                mode = int(ub.grad_bias_or_weight.value)
+            except Exception:
+                continue            if mode == 1 and (sysv0 || sysv1 || vpv0 || vpv1 || gv0 || gv1 || gd0 || gd1):
+                def sx(sig):
+                    return from_fxp(int(sig.value) & 0xFFFF)
+                cocotb.log.info(
+                    f"GD mon: mode={mode} gv=({gv0},{gv1}) gd=({gd0},{gd1}) addr=({addr0},{addr1}) "
+                    f"old=({sx(ub.value_old_in[0]):.4f},{sx(ub.value_old_in[1]):.4f}) "
+                    f"upd=({sx(ub.value_updated_out[0]):.4f},{sx(ub.value_updated_out[1]):.4f})"
+                )
+
+    gd_mon = cocotb.start_soon(monitor_gd()) if DEBUG_MON else None
+
+    for epoch in range(1, TRAIN_EPOCHS + 1):
+        await run_one_epoch(dut, epoch)
+        hw_w1, hw_b1, hw_w2, hw_b2 = read_hw_params(dut)
+        wr_ptr = int(dut.dut.tpu_inst.ub_inst.wr_ptr.value)
+        _, hw_h2 = forward_model(hw_w1, hw_b1, hw_w2, hw_b2)
+        hw_loss = mse_loss(hw_h2)
+        hw_pred = pred_bits(hw_h2)
+        loss_history.append(hw_loss)
+        pred_history.append(hw_pred)
+        cocotb.log.info(
+            f"epoch {epoch}: hw loss={hw_loss:.4f} pred={hw_pred} wr_ptr={wr_ptr} "
+            f"h2={[round(float(v), 4) for v in hw_h2]}"
+        )
+        cocotb.log.info(f"epoch {epoch}: hw W1={hw_w1.tolist()} B1={hw_b1.tolist()} W2={hw_w2.tolist()} B2={hw_b2.tolist()}")
+
+        ref_h1, ref_h2 = forward_model(ref_w1, ref_b1, ref_w2, ref_b2)
+        ref_dz2, ref_dz1 = backward_model(ref_h1, ref_h2, ref_w2)
+        ref_w1, ref_b1, ref_w2, ref_b2 = update_model(ref_w1, ref_b1, ref_w2, ref_b2, ref_h1, ref_dz2, ref_dz1)
+        cocotb.log.info(f"epoch {epoch}: ref W1={ref_w1.tolist()} B1={ref_b1.tolist()} W2={ref_w2.tolist()} B2={ref_b2.tolist()}")
+        if epoch == 1:
+            ub = dut.dut.tpu_inst.ub_inst.ub_memory
+            dz2_words = [int(ub[29 + i].value) & 0xFFFF for i in range(4)]
+            dz1_words = [int(ub[33 + i].value) & 0xFFFF for i in range(8)]
+            cocotb.log.info(f"epoch 1: hw UB dZ2={[from_fxp(w) for w in dz2_words]}")
+            cocotb.log.info(f"epoch 1: hw UB dZ1={[from_fxp(w) for w in dz1_words]}")
+
+    if mon is not None:
+        mon.kill()
+    if gd_mon is not None:
+        gd_mon.kill()
+
+    final_w1, final_b1, final_w2, final_b2 = read_hw_params(dut)
+    _, final_h2 = forward_model(final_w1, final_b1, final_w2, final_b2)
+    final_loss = mse_loss(final_h2)
+    final_pred = pred_bits(final_h2)
+
+    cocotb.log.info(f"final hw W1={final_w1.tolist()}")
+    cocotb.log.info(f"final hw B1={final_b1.tolist()}")
+    cocotb.log.info(f"final hw W2={final_w2.tolist()}")
+    cocotb.log.info(f"final hw B2={final_b2.tolist()}")
+    cocotb.log.info(f"loss history={loss_history}")
+    cocotb.log.info(f"pred history={pred_history}")
+
+    assert final_pred == EXPECTED_PRED, (
+        f"Expected XOR convergence to {EXPECTED_PRED}, got {final_pred}"
+    )
+    assert final_loss < LOSS_TARGET, (
+        f"Final loss {final_loss:.4f} did not beat target {LOSS_TARGET:.4f}"
+    )
+    assert final_loss < init_loss, (
+        f"Final loss {final_loss:.4f} did not improve over initial loss {init_loss:.4f}"
+    )

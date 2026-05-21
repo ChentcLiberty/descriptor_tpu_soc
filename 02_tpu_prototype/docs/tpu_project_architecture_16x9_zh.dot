@@ -1,0 +1,141 @@
+digraph TinyTPUProjectArch16x9_ZH {
+    graph [
+        rankdir=LR,
+        splines=ortho,
+        newrank=true,
+        compound=true,
+        size="13.333,7.5!",
+        ratio=fill,
+        pad=0.16,
+        nodesep=0.30,
+        ranksep=0.44,
+        bgcolor="#f8f6f1",
+        fontname="WenQuanYi Zen Hei",
+        labelloc=t,
+        labeljust=l,
+        label="TinyTPU AXI-Lite SoC 整体架构图\n系统集成 + 指令化执行 + 验证闭环    |    当前边界：无 DMA / IRQ",
+        fontsize=22,
+        outputorder=nodesfirst
+    ];
+
+    node [
+        shape=box,
+        style="rounded,filled",
+        color="#334155",
+        penwidth=1.15,
+        fontname="WenQuanYi Zen Hei",
+        fontsize=12,
+        margin="0.18,0.11",
+        fillcolor="#fffdfa",
+        width=1.85,
+        height=0.74
+    ];
+
+    edge [
+        color="#64748b",
+        penwidth=1.4,
+        arrowsize=0.72,
+        fontname="WenQuanYi Zen Hei",
+        fontsize=9
+    ];
+
+    subgraph cluster_sw {
+        label="1. 软件与驱动";
+        color="#c58a23";
+        penwidth=1.25;
+        style="rounded,filled";
+        fillcolor="#fff4df";
+
+        spec [label="模型规格\n2-layer MLP / XOR\nQ8.8 定点", width=1.75];
+        sched [label="调度与编码\nscheduler.py\nencode_instrs.py", fillcolor="#f3efe4", width=1.80];
+        artifact [label="编译产物\nschedule.json\nimem.hex", width=1.70];
+        cocotb [label="cocotb + NumPy\nAXI 驱动 / scoreboard\nQ8.8 参考模型", width=1.95];
+        vcs [label="directed bench\n波形 / 定向 debug\nH1 问题复现", width=1.85];
+
+        spec -> sched [style=invis, weight=100];
+        sched -> artifact [style=invis, weight=100];
+        artifact -> cocotb [style=invis, weight=100];
+        cocotb -> vcs [style=invis, weight=100];
+    }
+
+    subgraph cluster_soc {
+        label="2. SoC 控制与执行";
+        color="#2b6cb0";
+        penwidth=1.25;
+        style="rounded,filled";
+        fillcolor="#eaf2fd";
+
+        host [label="Host / PS\nAXI-Lite MMIO", fillcolor="#f7e7d0", width=1.62];
+        axil [label="tpu_frontend_axil\n寄存器堆 / CSR\nstart / status", width=1.95];
+        imem [label="IMEM\n59 条 32-bit 指令", width=1.68];
+        seq [label="Sequencer\nDISPATCH / WAIT\nADVANCE", width=1.75];
+        soc [label="tpu_soc\nfrontend + TPU core", width=1.85];
+
+        host -> axil [style=invis, weight=100];
+        axil -> imem [style=invis, weight=100];
+        imem -> seq [style=invis, weight=100];
+        seq -> soc [style=invis, weight=100];
+    }
+
+    subgraph cluster_core {
+        label="3. 计算核心";
+        color="#0f766e";
+        penwidth=1.25;
+        style="rounded,filled";
+        fillcolor="#e7f6f1";
+
+        ub [label="Unified Buffer\nhost write / 读指针\nwriteback / update", width=1.95];
+        sys [label="Systolic Array\n2x2 Weight Stationary", width=1.90];
+        vpu [label="VPU 算子链\nbias / 激活 / loss / grad", width=1.95];
+        upd [label="参数更新路径\ngradient_descent\n回写 UB", width=1.85];
+        obs [label="可观测点\nH1 / dZ2 / dZ1\nUB update", width=1.75];
+
+        ub -> sys [style=invis, weight=100];
+        sys -> vpu [style=invis, weight=100];
+        vpu -> upd [style=invis, weight=100];
+        upd -> obs [style=invis, weight=100];
+    }
+
+    subgraph cluster_verify {
+        label="4. 验证与结果";
+        color="#7c3aed";
+        penwidth=1.25;
+        style="rounded,filled";
+        fillcolor="#f2ebff";
+
+        e2e [label="AXI e2e\n41 / 41 PASS\n覆盖 H1 + dZ2 + dZ1 + UB update", width=2.00];
+        train [label="多 epoch 收敛\n12 epoch\nloss 0.2529 -> 0.1777", width=1.90];
+        metrics [label="当前可讲结果\nXOR 预测 (0,1,1,0)\n行为闭环已收敛\nFmax 164.10 -> 183.91 MHz", width=2.05];
+        scope [label="边界说明\n当前 tiny-tpu 原型\n不是通用编译器 / 完整 SoC", width=2.10];
+
+        e2e -> train [style=invis, weight=100];
+        train -> metrics [style=invis, weight=100];
+        metrics -> scope [style=invis, weight=100];
+    }
+
+    spec -> sched [xlabel="模型到 schedule", color="#8b5e1a", fontcolor="#8b5e1a", penwidth=1.6];
+    sched -> artifact [xlabel="编码", color="#8b5e1a", fontcolor="#8b5e1a", penwidth=1.6];
+    artifact -> imem [xlabel="装载指令", color="#8b5e1a", fontcolor="#8b5e1a", penwidth=1.6];
+    cocotb -> host [xlabel="AXI 驱动", color="#8b5e1a", fontcolor="#8b5e1a", penwidth=1.6];
+    vcs -> soc [style=dashed, xlabel="定向 debug", color="#8b5e1a", fontcolor="#8b5e1a", penwidth=1.5];
+
+    host -> axil [xlabel="MMIO", color="#2563eb", fontcolor="#2563eb"];
+    axil -> imem [xlabel="写 IMEM", color="#2563eb", fontcolor="#2563eb"];
+    axil -> seq [xlabel="start / status", color="#2563eb", fontcolor="#2563eb"];
+    imem -> seq [xlabel="wait_after", color="#2563eb", fontcolor="#2563eb"];
+    seq -> soc [xlabel="seq_instr_pulse", color="#2563eb", fontcolor="#2563eb"];
+    axil -> soc [xlabel="参数 / UB_DATA", color="#c2410c", fontcolor="#c2410c", penwidth=1.65];
+
+    soc -> ub [xlabel="数据搬运", color="#0f766e", fontcolor="#0f766e"];
+    ub -> sys [xlabel="矩阵块", color="#0f766e", fontcolor="#0f766e"];
+    sys -> vpu [xlabel="中间结果", color="#0f766e", fontcolor="#0f766e"];
+    vpu -> upd [xlabel="梯度 / 更新值", color="#0f766e", fontcolor="#0f766e"];
+    upd -> ub [xlabel="回写 UB", color="#c2410c", fontcolor="#c2410c", constraint=false];
+    soc -> obs [xlabel="对外观测", color="#0f766e", fontcolor="#0f766e"];
+
+    obs -> e2e [xlabel="scoreboard", color="#7c3aed", fontcolor="#7c3aed", penwidth=1.6];
+    e2e -> train [style=dashed, xlabel="行为正确", color="#7c3aed", fontcolor="#7c3aed", penwidth=1.5];
+    train -> metrics [color="#7c3aed", penwidth=1.6];
+    sys -> metrics [style=dashed, color="#7c3aed", penwidth=1.5, constraint=false];
+    cocotb -> e2e [style=dashed, color="#7c3aed", penwidth=1.4];
+}

@@ -1,0 +1,352 @@
+{
+  "checkpoint": "/home/jjt/soc/\u7b97\u6cd5/Breathrecognitionbest/checkpoints/best_model.pth",
+  "clip_counts": {
+    "conv1_b": 0,
+    "conv1_w": 0,
+    "conv2_b": 0,
+    "conv2_w": 0,
+    "conv3_b": 0,
+    "conv3_w": 0,
+    "conv4_b": 0,
+    "conv4_w": 0,
+    "feature": 0,
+    "film_l0_b": 0,
+    "film_l0_w": 0,
+    "film_l2_b": 0,
+    "film_l2_w": 0,
+    "signal": 0
+  },
+  "cpu_preprocessed_features_q8_8": [
+    -232,
+    142,
+    251,
+    106,
+    -310,
+    -188,
+    142,
+    0
+  ],
+  "cpu_preprocessed_signal_first_q8_8": [
+    -154,
+    -155,
+    -156,
+    -157,
+    -158,
+    -160,
+    -161,
+    -162,
+    -163,
+    -164,
+    -164,
+    -164,
+    -163,
+    -161,
+    -154,
+    -144
+  ],
+  "csv_dir": "/home/jjt/soc/\u7b97\u6cd5/Breathrecognitionbest/csv",
+  "csv_raw_features_float": [
+    0.1953125,
+    0.001756217097863555,
+    0.0018352193292230368,
+    0.004078857600688934,
+    0.02849014662206173,
+    -1.91133713722229,
+    0.006452328525483608,
+    0.0
+  ],
+  "feature_columns": [
+    "dominant_freq",
+    "std",
+    "mean",
+    "peak_to_peak",
+    "skewness",
+    "kurtosis",
+    "energy",
+    "zero_crossing_rate"
+  ],
+  "label": 2,
+  "loader": "torchzip",
+  "normalized_features": [
+    -0.9081737399101257,
+    0.5538755655288696,
+    0.9811748266220093,
+    0.41590237617492676,
+    -1.2049651145935059,
+    -0.7345049381256104,
+    0.5566074848175049,
+    0.0
+  ],
+  "raw_features_cpu_float": [
+    0.1953125,
+    0.0017562136054039001,
+    0.001835215836763382,
+    0.004078857600688934,
+    0.02533428743481636,
+    -1.9116887636482716,
+    0.006452325731515884,
+    0.0
+  ],
+  "regions": [
+    {
+      "base": "0x60000000",
+      "end": "0x600000C0",
+      "name": "g_tpu_param_mlp_key_l0",
+      "words": 48
+    },
+    {
+      "base": "0x60000400",
+      "end": "0x60001480",
+      "name": "g_tpu_param_mlp_key_l1",
+      "words": 1056
+    },
+    {
+      "base": "0x60002000",
+      "end": "0x60006100",
+      "name": "g_tpu_param_mlp_key_l2",
+      "words": 4160
+    },
+    {
+      "base": "0x60007000",
+      "end": "0x6000B080",
+      "name": "g_tpu_param_mlp_key_l3",
+      "words": 4128
+    },
+    {
+      "base": "0x6000C000",
+      "end": "0x6000D040",
+      "name": "g_tpu_param_mlp_key_l4",
+      "words": 1040
+    },
+    {
+      "base": "0x6000E000",
+      "end": "0x6000E1C0",
+      "name": "g_tpu_param_mlp_other_l0",
+      "words": 112
+    },
+    {
+      "base": "0x6000E400",
+      "end": "0x6000EC40",
+      "name": "g_tpu_param_mlp_other_l1",
+      "words": 528
+    },
+    {
+      "base": "0x60020000",
+      "end": "0x600250C0",
+      "name": "g_tpu_param_classifier_l0_chunk0",
+      "words": 5168
+    },
+    {
+      "base": "0x60026000",
+      "end": "0x6002B0C0",
+      "name": "g_tpu_param_classifier_l0_chunk1",
+      "words": 5168
+    },
+    {
+      "base": "0x6002C000",
+      "end": "0x600310C0",
+      "name": "g_tpu_param_classifier_l0_chunk2",
+      "words": 5168
+    },
+    {
+      "base": "0x60032000",
+      "end": "0x600370C0",
+      "name": "g_tpu_param_classifier_l0_chunk3",
+      "words": 5168
+    },
+    {
+      "base": "0x60038000",
+      "end": "0x6003D0C0",
+      "name": "g_tpu_param_classifier_l0_chunk4",
+      "words": 5168
+    },
+    {
+      "base": "0x6003E000",
+      "end": "0x600430C0",
+      "name": "g_tpu_param_classifier_l0_chunk5",
+      "words": 5168
+    },
+    {
+      "base": "0x60044000",
+      "end": "0x600490C0",
+      "name": "g_tpu_param_classifier_l0_chunk6",
+      "words": 5168
+    },
+    {
+      "base": "0x6004A000",
+      "end": "0x6004F0C0",
+      "name": "g_tpu_param_classifier_l0_chunk7",
+      "words": 5168
+    },
+    {
+      "base": "0x60050000",
+      "end": "0x60054040",
+      "name": "g_tpu_param_classifier_l1_chunk0",
+      "words": 4112
+    },
+    {
+      "base": "0x60055000",
+      "end": "0x60059040",
+      "name": "g_tpu_param_classifier_l1_chunk1",
+      "words": 4112
+    },
+    {
+      "base": "0x6005A000",
+      "end": "0x6005E040",
+      "name": "g_tpu_param_classifier_l1_chunk2",
+      "words": 4112
+    },
+    {
+      "base": "0x6005F000",
+      "end": "0x60063040",
+      "name": "g_tpu_param_classifier_l1_chunk3",
+      "words": 4112
+    },
+    {
+      "base": "0x60064000",
+      "end": "0x60068080",
+      "name": "g_tpu_param_classifier_l2",
+      "words": 4128
+    },
+    {
+      "base": "0x60069000",
+      "end": "0x60069208",
+      "name": "g_tpu_param_classifier_l3",
+      "words": 130
+    },
+    {
+      "base": "0x60070000",
+      "end": "0x600701C0",
+      "name": "g_breath_cpu_frontend_conv1_w",
+      "words": 112
+    },
+    {
+      "base": "0x60070200",
+      "end": "0x60070240",
+      "name": "g_breath_cpu_frontend_conv1_b",
+      "words": 16
+    },
+    {
+      "base": "0x60070300",
+      "end": "0x60075300",
+      "name": "g_breath_cpu_frontend_conv2_w",
+      "words": 5120
+    },
+    {
+      "base": "0x60075300",
+      "end": "0x60075380",
+      "name": "g_breath_cpu_frontend_conv2_b",
+      "words": 32
+    },
+    {
+      "base": "0x60075400",
+      "end": "0x60081400",
+      "name": "g_breath_cpu_frontend_conv3_w",
+      "words": 12288
+    },
+    {
+      "base": "0x60081400",
+      "end": "0x60081500",
+      "name": "g_breath_cpu_frontend_conv3_b",
+      "words": 64
+    },
+    {
+      "base": "0x60081500",
+      "end": "0x600B1500",
+      "name": "g_breath_cpu_frontend_conv4_w",
+      "words": 49152
+    },
+    {
+      "base": "0x600B1500",
+      "end": "0x600B1700",
+      "name": "g_breath_cpu_frontend_conv4_b",
+      "words": 128
+    },
+    {
+      "base": "0x600B1700",
+      "end": "0x600B1800",
+      "name": "g_breath_cpu_frontend_film_l0_w",
+      "words": 64
+    },
+    {
+      "base": "0x600B1800",
+      "end": "0x600B1880",
+      "name": "g_breath_cpu_frontend_film_l0_b",
+      "words": 32
+    },
+    {
+      "base": "0x600B1900",
+      "end": "0x600B5900",
+      "name": "g_breath_cpu_frontend_film_l2_w",
+      "words": 4096
+    },
+    {
+      "base": "0x600B5900",
+      "end": "0x600B5A00",
+      "name": "g_breath_cpu_frontend_film_l2_b",
+      "words": 64
+    },
+    {
+      "base": "0x60120000",
+      "end": "0x601207D0",
+      "name": "g_breath_cpu_frontend_signal",
+      "words": 500
+    },
+    {
+      "base": "0x60121000",
+      "end": "0x60121010",
+      "name": "g_breath_cpu_frontend_features",
+      "words": 4
+    },
+    {
+      "base": "0x60123000",
+      "end": "0x60123FA0",
+      "name": "g_breath_cpu_frontend_raw_signal_q30",
+      "words": 1000
+    },
+    {
+      "base": "0x60124000",
+      "end": "0x60124020",
+      "name": "g_breath_cpu_frontend_feature_mean_q28",
+      "words": 8
+    },
+    {
+      "base": "0x60124100",
+      "end": "0x60124120",
+      "name": "g_breath_cpu_frontend_feature_inv_std_q20",
+      "words": 8
+    },
+    {
+      "base": "0x60125000",
+      "end": "0x60125FA0",
+      "name": "g_breath_cpu_frontend_signal_mean_q30",
+      "words": 1000
+    },
+    {
+      "base": "0x60126000",
+      "end": "0x60126FA0",
+      "name": "g_breath_cpu_frontend_signal_inv_std_q20",
+      "words": 1000
+    },
+    {
+      "base": "0x60127000",
+      "end": "0x60127200",
+      "name": "g_breath_cpu_frontend_welch_window_q15",
+      "words": 128
+    },
+    {
+      "base": "0x60128000",
+      "end": "0x60138200",
+      "name": "g_breath_cpu_frontend_welch_cos_q15",
+      "words": 16512
+    },
+    {
+      "base": "0x60139000",
+      "end": "0x60149200",
+      "name": "g_breath_cpu_frontend_welch_sin_q15",
+      "words": 16512
+    }
+  ],
+  "sample_index": 0,
+  "scale": 256
+}
