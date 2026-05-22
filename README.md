@@ -6,7 +6,7 @@ Descriptor-driven RISC-V + TPU SoC for breath-recognition workloads.
 
 ## Current status
 
-As of `2026-05-21`, the mainline in `01_soc_mainline` has already reached:
+As of `2026-05-22`, the mainline in `01_soc_mainline` has already reached:
 
 - Panda RISC-V SoC + descriptor-driven TPU task launch
 - shared-SRAM data exchange and real stage2 wrapper integration
@@ -15,6 +15,11 @@ As of `2026-05-21`, the mainline in `01_soc_mainline` has already reached:
 - stable regression coverage for the `NET_ID=3` mainline
 - raw preprocess + `NET_ID=3` extended/soak regression
 - focused UVM smoke for the `NET_ID=3` wrapper path
+- stub-free stage2 top fixed to the real TPU path
+- legacy stub RTL/TB removed from the mainline tree
+- internal execution/debug naming normalized to `tpu_exec_*`
+- obsolete external TPU compatibility ports removed from the stage2 top
+- refreshed architecture and algorithm talk-track docs aligned to the `2026-05-22` real-wrapper / `NET_ID=3` mainline wording
 
 The current raw-path signoff policy is `staged_dual_baseline_rtl_signoff`:
 
@@ -42,7 +47,7 @@ descriptor_tpu_soc/
 The main competition SoC line.
 
 - `docs/`
-  Current status, architecture notes, validation notes, delivery notes, and UVM/baseline policy docs.
+  Current status, refreshed architecture/algorithm talk-track docs, validation notes, delivery notes, and UVM/baseline policy docs.
 - `work/600_competition_5stage/software/`
   CPU runtime, descriptor definitions, demo software, generated expected data.
 - `work/600_competition_5stage/fpga/panda_soc_eva/rtl/`
@@ -52,11 +57,18 @@ The main competition SoC line.
 
 Start here if you want the latest integrated system.
 
+Important current mainline note:
+
+- `01_soc_mainline` no longer keeps a selectable descriptor/compute stub path in the stage2 top.
+- The current integrated path is fixed to the real TPU wrapper + real TPU execution flow.
+
 Recommended entry documents:
 
 - `01_soc_mainline/docs/stage2_net3_cnn_frontend_status_20260518.md`
 - `01_soc_mainline/docs/stage2_net3_uvm_methodology_20260521.md`
 - `01_soc_mainline/docs/stage2_raw_net3_dual_baseline_policy_20260521.md`
+- `01_soc_mainline/docs/CPU_TPU_呼吸识别SoC_RTL架构图_讲解稿_20260419.md`
+- `01_soc_mainline/docs/CPU_TPU_呼吸识别_算法拆分_CPU发送TPU_讲解稿_20260419.md`
 
 ### `02_tpu_prototype`
 
@@ -146,3 +158,4 @@ The goal is to keep the repository source-oriented and readable.
 - This repository is a curated export from an active workspace, not a clean-room rewrite.
 - Some directories preserve historical evolution on purpose because the development path itself is useful context.
 - If you only care about the current deliverable path, stay inside `01_soc_mainline`.
+- As of the latest mainline update, the stage2 top-level external TPU compatibility ports were removed and the integration path is intentionally narrower and clearer.

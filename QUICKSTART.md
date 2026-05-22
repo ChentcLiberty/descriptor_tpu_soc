@@ -9,24 +9,38 @@ Recommended order:
 
 1. `README.md`
 2. `01_soc_mainline/docs/stage2_net3_cnn_frontend_status_20260518.md`
-3. `01_soc_mainline/docs/stage2_net3_uvm_methodology_20260521.md`
-4. `01_soc_mainline/docs/stage2_raw_net3_dual_baseline_policy_20260521.md`
+3. `01_soc_mainline/docs/CPU_TPU_呼吸识别_算法拆分_CPU发送TPU_讲解稿_20260419.md`
+4. `01_soc_mainline/docs/CPU_TPU_呼吸识别SoC_RTL架构图_讲解稿_20260419.md`
+5. `01_soc_mainline/docs/stage2_net3_uvm_methodology_20260521.md`
+6. `01_soc_mainline/docs/stage2_raw_net3_dual_baseline_policy_20260521.md`
 
 ## 2. Current integrated deliverable
 
 The current deliverable path is:
 
 ```text
-CPU preprocess / fixture
+CPU raw preprocess / fixture
 -> descriptor launch
 -> stage2 real wrapper
 -> NET_ID=3 hardware CNN frontend
--> classifier
+-> NET_ID=0/1/2 fullcore classifier
 ```
+
+This path is now stub-free at the stage2 top level:
+
+- the mainline stage2 top is fixed to the real TPU wrapper
+- legacy descriptor/compute stub RTL is no longer part of the integrated path
+- internal execution observability uses `tpu_exec_*` naming
+- obsolete external TPU compatibility ports were removed from the stage2 top
 
 The main verification entry directory is:
 
 `01_soc_mainline/work/600_competition_5stage/fpga/panda_soc_eva/tb`
+
+If you want the architecture/storytelling docs before the scripts, start with:
+
+- `01_soc_mainline/docs/CPU_TPU_呼吸识别_算法拆分_CPU发送TPU_讲解稿_20260419.md`
+- `01_soc_mainline/docs/CPU_TPU_呼吸识别SoC_RTL架构图_讲解稿_20260419.md`
 
 ## 3. Main commands
 

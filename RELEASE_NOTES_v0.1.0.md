@@ -62,3 +62,16 @@ cd 01_soc_mainline/work/600_competition_5stage/fpga/panda_soc_eva/tb
 1. Expand UVM from focused wrapper smoke into raw watchpoint scoreboards.
 2. Continue tightening raw baseline governance around the dual-baseline policy.
 3. Add coverage-driven signoff metrics for the `NET_ID=3` path.
+
+## Post-release mainline cleanup note
+
+After `v0.1.0-net3-delivery`, the active mainline continued to tighten the
+stage2 integration path:
+
+- legacy descriptor/compute stub RTL/TB was removed from the mainline
+- internal stage2 observability names were normalized to `tpu_exec_*`
+- obsolete external TPU compatibility ports were removed from the stage2 top
+- architecture and algorithm talk-track docs were refreshed to the `2026-05-22` real-wrapper / `NET_ID=3` mainline wording
+
+These changes are part of the ongoing workspace history and may exist on the
+default branch beyond the `v0.1.0-net3-delivery` tag.
