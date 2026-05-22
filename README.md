@@ -141,6 +141,10 @@ The goal is to keep the repository source-oriented and readable.
   Fast entry for the current `NET_ID=3` mainline and verification flow.
 - `RELEASE_NOTES_v0.1.0.md`
   First public snapshot notes for the `NET_ID=3` delivery state.
+- `RELEASE_NOTES_v0.1.1.md`
+  Follow-up public doc refresh notes aligned to the `2026-05-22` mainline wording.
+- `01_soc_mainline/docs/README.md`
+  Entry page for the current mainline docs and historical-note boundaries.
 - `THIRD_PARTY_NOTICES.md`
   Third-party attribution notes for retained external code.
 
