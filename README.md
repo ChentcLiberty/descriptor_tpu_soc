@@ -145,6 +145,10 @@ The goal is to keep the repository source-oriented and readable.
   Follow-up public doc refresh notes aligned to the `2026-05-22` mainline wording.
 - `GITHUB_RELEASE_v0.1.2.md`
   Ready-to-paste release body text for the `v0.1.2-doc-index` public tag.
+- `GITHUB_RELEASE_v0.1.3.md`
+  Ready-to-paste release body text for the `v0.1.3-release-kit` public tag.
+- `RELEASE_INDEX.md`
+  Explains the intent and scope of each public tag.
 - `01_soc_mainline/docs/README.md`
   Entry page for the current mainline docs and historical-note boundaries.
 - `THIRD_PARTY_NOTICES.md`
