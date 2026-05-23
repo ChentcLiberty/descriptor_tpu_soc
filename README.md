@@ -143,6 +143,8 @@ The goal is to keep the repository source-oriented and readable.
   First public snapshot notes for the `NET_ID=3` delivery state.
 - `RELEASE_NOTES_v0.1.1.md`
   Follow-up public doc refresh notes aligned to the `2026-05-22` mainline wording.
+- `GITHUB_RELEASE_v0.1.2.md`
+  Ready-to-paste release body text for the `v0.1.2-doc-index` public tag.
 - `01_soc_mainline/docs/README.md`
   Entry page for the current mainline docs and historical-note boundaries.
 - `THIRD_PARTY_NOTICES.md`

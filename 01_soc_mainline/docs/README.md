@@ -12,6 +12,7 @@ Start with these files if you want the current integrated picture:
 3. `CPU_TPU_呼吸识别SoC_RTL架构图_讲解稿_20260419.md`
 4. `stage2_net3_uvm_methodology_20260521.md`
 5. `stage2_raw_net3_dual_baseline_policy_20260521.md`
+6. `PRESENTATION_ASSETS.md`
 
 ## Current mainline summary
 
@@ -38,6 +39,9 @@ As of `2026-05-22`, the current `01_soc_mainline` path is:
   Current raw-path baseline/signoff policy.
 - `stage2_raw_net3_baseline_diff_20260520.md`
   Current raw-path baseline difference note.
+- `PRESENTATION_ASSETS.md`
+  Explains which PPT/Markdown assets are source-controlled and which are
+  regenerated/share-delivery artifacts.
 
 ## Historical notes
 
