@@ -64,6 +64,7 @@ Important current mainline note:
 
 Recommended entry documents:
 
+- `01_soc_mainline/docs/ARCHITECTURE_OVERVIEW.md`
 - `01_soc_mainline/docs/stage2_net3_cnn_frontend_status_20260518.md`
 - `01_soc_mainline/docs/stage2_net3_uvm_methodology_20260521.md`
 - `01_soc_mainline/docs/stage2_raw_net3_dual_baseline_policy_20260521.md`
@@ -151,17 +152,20 @@ The goal is to keep the repository source-oriented and readable.
   Explains the intent and scope of each public tag.
 - `01_soc_mainline/docs/README.md`
   Entry page for the current mainline docs and historical-note boundaries.
+- `01_soc_mainline/docs/ARCHITECTURE_OVERVIEW.md`
+  Short English architecture summary for the current mainline.
 - `THIRD_PARTY_NOTICES.md`
   Third-party attribution notes for retained external code.
 
 ## Suggested reading order
 
-1. `01_soc_mainline/docs/stage2_net3_cnn_frontend_status_20260518.md`
-2. `01_soc_mainline/docs/CPU_TPU_呼吸识别_算法拆分_CPU发送TPU_讲解稿_20260419.md`
-3. `01_soc_mainline/docs/CPU_TPU_呼吸识别SoC_RTL架构图_讲解稿_20260419.md`
-4. `04_stage2_cnn_frontend_lab/README.md`
-5. `03_stage2_fullcore_semantics/docs/README.md`
-6. `02_tpu_prototype/README.md`
+1. `01_soc_mainline/docs/ARCHITECTURE_OVERVIEW.md`
+2. `01_soc_mainline/docs/stage2_net3_cnn_frontend_status_20260518.md`
+3. `01_soc_mainline/docs/CPU_TPU_呼吸识别_算法拆分_CPU发送TPU_讲解稿_20260419.md`
+4. `01_soc_mainline/docs/CPU_TPU_呼吸识别SoC_RTL架构图_讲解稿_20260419.md`
+5. `04_stage2_cnn_frontend_lab/README.md`
+6. `03_stage2_fullcore_semantics/docs/README.md`
+7. `02_tpu_prototype/README.md`
 
 ## Notes
 
