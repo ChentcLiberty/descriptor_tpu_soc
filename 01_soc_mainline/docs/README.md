@@ -8,12 +8,13 @@ older historical notes kept for context.
 Start with these files if you want the current integrated picture:
 
 1. `ARCHITECTURE_OVERVIEW.md`
-2. `stage2_net3_cnn_frontend_status_20260518.md`
-3. `CPU_TPU_呼吸识别_算法拆分_CPU发送TPU_讲解稿_20260419.md`
-4. `CPU_TPU_呼吸识别SoC_RTL架构图_讲解稿_20260419.md`
-5. `stage2_net3_uvm_methodology_20260521.md`
-6. `stage2_raw_net3_dual_baseline_policy_20260521.md`
-6. `PRESENTATION_ASSETS.md`
+2. `VERIFICATION_OVERVIEW.md`
+3. `stage2_net3_cnn_frontend_status_20260518.md`
+4. `CPU_TPU_呼吸识别_算法拆分_CPU发送TPU_讲解稿_20260419.md`
+5. `CPU_TPU_呼吸识别SoC_RTL架构图_讲解稿_20260419.md`
+6. `stage2_net3_uvm_methodology_20260521.md`
+7. `stage2_raw_net3_dual_baseline_policy_20260521.md`
+8. `PRESENTATION_ASSETS.md`
 
 ## Current mainline summary
 
@@ -32,6 +33,8 @@ As of `2026-05-22`, the current `01_soc_mainline` path is:
   Primary status page for the integrated `NET_ID=3` line.
 - `ARCHITECTURE_OVERVIEW.md`
   Short English architecture summary for the current mainline.
+- `VERIFICATION_OVERVIEW.md`
+  Short English verification summary for the current mainline.
 - `CPU_TPU_呼吸识别_算法拆分_CPU发送TPU_讲解稿_20260419.md`
   Best starting point if you want the software-to-hardware story.
 - `CPU_TPU_呼吸识别SoC_RTL架构图_讲解稿_20260419.md`
