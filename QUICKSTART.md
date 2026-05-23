@@ -10,11 +10,12 @@ Recommended order:
 1. `README.md`
 2. `01_soc_mainline/docs/ARCHITECTURE_OVERVIEW.md`
 3. `01_soc_mainline/docs/VERIFICATION_OVERVIEW.md`
-4. `01_soc_mainline/docs/stage2_net3_cnn_frontend_status_20260518.md`
-5. `01_soc_mainline/docs/CPU_TPU_呼吸识别_算法拆分_CPU发送TPU_讲解稿_20260419.md`
-6. `01_soc_mainline/docs/CPU_TPU_呼吸识别SoC_RTL架构图_讲解稿_20260419.md`
-7. `01_soc_mainline/docs/stage2_net3_uvm_methodology_20260521.md`
-8. `01_soc_mainline/docs/stage2_raw_net3_dual_baseline_policy_20260521.md`
+4. `01_soc_mainline/docs/SOFTWARE_OVERVIEW.md`
+5. `01_soc_mainline/docs/stage2_net3_cnn_frontend_status_20260518.md`
+6. `01_soc_mainline/docs/CPU_TPU_呼吸识别_算法拆分_CPU发送TPU_讲解稿_20260419.md`
+7. `01_soc_mainline/docs/CPU_TPU_呼吸识别SoC_RTL架构图_讲解稿_20260419.md`
+8. `01_soc_mainline/docs/stage2_net3_uvm_methodology_20260521.md`
+9. `01_soc_mainline/docs/stage2_raw_net3_dual_baseline_policy_20260521.md`
 
 ## 2. Current integrated deliverable
 
@@ -43,6 +44,7 @@ If you want the architecture/storytelling docs before the scripts, start with:
 
 - `01_soc_mainline/docs/ARCHITECTURE_OVERVIEW.md`
 - `01_soc_mainline/docs/VERIFICATION_OVERVIEW.md`
+- `01_soc_mainline/docs/SOFTWARE_OVERVIEW.md`
 - `01_soc_mainline/docs/CPU_TPU_呼吸识别_算法拆分_CPU发送TPU_讲解稿_20260419.md`
 - `01_soc_mainline/docs/CPU_TPU_呼吸识别SoC_RTL架构图_讲解稿_20260419.md`
 

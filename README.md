@@ -156,6 +156,8 @@ The goal is to keep the repository source-oriented and readable.
   Short English architecture summary for the current mainline.
 - `01_soc_mainline/docs/VERIFICATION_OVERVIEW.md`
   Short English verification summary for the current mainline.
+- `01_soc_mainline/docs/SOFTWARE_OVERVIEW.md`
+  Short English software/runtime summary for the current mainline.
 - `THIRD_PARTY_NOTICES.md`
   Third-party attribution notes for retained external code.
 
@@ -163,12 +165,13 @@ The goal is to keep the repository source-oriented and readable.
 
 1. `01_soc_mainline/docs/ARCHITECTURE_OVERVIEW.md`
 2. `01_soc_mainline/docs/VERIFICATION_OVERVIEW.md`
-3. `01_soc_mainline/docs/stage2_net3_cnn_frontend_status_20260518.md`
-4. `01_soc_mainline/docs/CPU_TPU_呼吸识别_算法拆分_CPU发送TPU_讲解稿_20260419.md`
-5. `01_soc_mainline/docs/CPU_TPU_呼吸识别SoC_RTL架构图_讲解稿_20260419.md`
-6. `04_stage2_cnn_frontend_lab/README.md`
-7. `03_stage2_fullcore_semantics/docs/README.md`
-8. `02_tpu_prototype/README.md`
+3. `01_soc_mainline/docs/SOFTWARE_OVERVIEW.md`
+4. `01_soc_mainline/docs/stage2_net3_cnn_frontend_status_20260518.md`
+5. `01_soc_mainline/docs/CPU_TPU_呼吸识别_算法拆分_CPU发送TPU_讲解稿_20260419.md`
+6. `01_soc_mainline/docs/CPU_TPU_呼吸识别SoC_RTL架构图_讲解稿_20260419.md`
+7. `04_stage2_cnn_frontend_lab/README.md`
+8. `03_stage2_fullcore_semantics/docs/README.md`
+9. `02_tpu_prototype/README.md`
 
 ## Notes
 
